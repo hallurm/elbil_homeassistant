@@ -8,6 +8,14 @@
 #
 # Se elbilsensorer.md for en fuld beskrivelse af hvad hver sensor gør, og
 # hvordan beregningerne hænger sammen.
+#
+# Visning: alle template-sensorer nedenfor har "suggested_display_precision: 1",
+# så de vises med én decimal i UI'et. De tre "integration"-sensorer herunder,
+# samt utility_meter-periodetællerne i utility_meter.yaml, understøtter ikke
+# denne indstilling direkte i YAML — for dem sættes 1-decimals visning i
+# stedet via Indstillinger → Enheder & tjenester → Entiteter → (tandhjul) →
+# "Præcision", eller ved at sætte "display_precision" i entitetens
+# registreringsdata (.storage/core.entity_registry).
 
 sensor:
   # Riemann sum integration for EV charging energy bought from the grid
@@ -50,6 +58,7 @@ template:
         unit_of_measurement: "W"
         device_class: power
         state_class: measurement
+        suggested_display_precision: 1
         state: >-
           {% set va = states('sensor.power_meter_phase_a_voltage') | float(0) %}
           {% set vb = states('sensor.power_meter_phase_b_voltage') | float(0) %}
@@ -65,6 +74,7 @@ template:
         unit_of_measurement: "W"
         device_class: power
         state_class: measurement
+        suggested_display_precision: 1
         state: >-
           {% set ev_power = states('sensor.elbil_oplader_ac_effekt') | float(0) %}
           {% set solar_power = states('sensor.inverter_active_power') | float(0) %}
@@ -79,6 +89,7 @@ template:
         icon: mdi:speedometer
         unit_of_measurement: "DKK/h"
         state_class: measurement
+        suggested_display_precision: 1
         state: >-
           {% set grid_power_kw = states('sensor.elbil_oplader_effekt_fra_nettet') | float(0) / 1000 %}
           {% set price = states('sensor.el_kob_pris') | float(0) %}
@@ -90,6 +101,7 @@ template:
         unit_of_measurement: "%"
         icon: mdi:solar-power
         state_class: measurement
+        suggested_display_precision: 1
         state: >-
           {% set ev_power = states('sensor.elbil_oplader_ac_effekt') | float(0) %}
           {% set grid_power = states('sensor.elbil_oplader_effekt_fra_nettet') | float(0) %}
@@ -101,6 +113,7 @@ template:
         unit_of_measurement: "W"
         device_class: power
         state_class: measurement
+        suggested_display_precision: 1
         state: >-
           {% set ev_power = states('sensor.elbil_oplader_ac_effekt') | float(0) %}
           {% set grid_power = states('sensor.elbil_oplader_effekt_fra_nettet') | float(0) %}
@@ -112,6 +125,7 @@ template:
         unit_of_measurement: "%"
         icon: mdi:solar-power
         state_class: measurement
+        suggested_display_precision: 1
         state: >-
           {% set net = states('sensor.elbil_opladning_kwh_fra_nettet_i_dag') | float(0) %}
           {% set sol = states('sensor.elbil_opladning_kwh_fra_sol_i_dag') | float(0) %}
@@ -124,6 +138,7 @@ template:
         unit_of_measurement: "%"
         icon: mdi:solar-power
         state_class: measurement
+        suggested_display_precision: 1
         state: >-
           {% set net = states('sensor.elbil_opladning_kwh_fra_nettet_denne_uge') | float(0) %}
           {% set sol = states('sensor.elbil_opladning_kwh_fra_sol_denne_uge') | float(0) %}
@@ -136,6 +151,7 @@ template:
         unit_of_measurement: "%"
         icon: mdi:solar-power
         state_class: measurement
+        suggested_display_precision: 1
         state: >-
           {% set net = states('sensor.elbil_opladning_kwh_fra_nettet_denne_maned') | float(0) %}
           {% set sol = states('sensor.elbil_opladning_kwh_fra_sol_denne_maned') | float(0) %}
@@ -148,6 +164,7 @@ template:
         unit_of_measurement: "%"
         icon: mdi:solar-power
         state_class: measurement
+        suggested_display_precision: 1
         state: >-
           {% set net = states('sensor.elbil_opladning_kwh_fra_nettet_dette_ar') | float(0) %}
           {% set sol = states('sensor.elbil_opladning_kwh_fra_sol_dette_ar') | float(0) %}
@@ -160,6 +177,7 @@ template:
         unit_of_measurement: "kWh"
         device_class: energy
         state_class: total
+        suggested_display_precision: 1
         icon: mdi:ev-station
         state: "{{ states('input_number.elbil_ekstern_kwh_total') | float(0) }}"
 
@@ -167,6 +185,7 @@ template:
         unique_id: "elbil_ekstern_opladning_pris_total"
         unit_of_measurement: "DKK"
         state_class: total
+        suggested_display_precision: 1
         icon: mdi:cash-multiple
         state: "{{ states('input_number.elbil_ekstern_pris_total') | float(0) }}"
 
@@ -177,6 +196,7 @@ template:
         unit_of_measurement: "kWh"
         device_class: energy
         state_class: total
+        suggested_display_precision: 1
         icon: mdi:car-electric
         state: >-
           {% set hjemme_net = states('sensor.elbil_oplader_energi_fra_nettet') | float(0) %}
@@ -188,6 +208,7 @@ template:
         unique_id: "elbil_total_pris_alt"
         unit_of_measurement: "DKK"
         state_class: total
+        suggested_display_precision: 1
         icon: mdi:cash-multiple
         state: >-
           {% set hjemme = states('sensor.elbil_oplader_pris_akkumuleret') | float(0) %}
@@ -200,6 +221,7 @@ template:
         unit_of_measurement: "kWh"
         device_class: energy
         state_class: total
+        suggested_display_precision: 1
         icon: mdi:car-electric
         state: >-
           {% set net = states('sensor.elbil_opladning_kwh_fra_nettet_i_dag') | float(0) %}
@@ -212,6 +234,7 @@ template:
         unit_of_measurement: "kWh"
         device_class: energy
         state_class: total
+        suggested_display_precision: 1
         icon: mdi:car-electric
         state: >-
           {% set net = states('sensor.elbil_opladning_kwh_fra_nettet_denne_uge') | float(0) %}
@@ -224,6 +247,7 @@ template:
         unit_of_measurement: "kWh"
         device_class: energy
         state_class: total
+        suggested_display_precision: 1
         icon: mdi:car-electric
         state: >-
           {% set net = states('sensor.elbil_opladning_kwh_fra_nettet_denne_maned') | float(0) %}
@@ -236,6 +260,7 @@ template:
         unit_of_measurement: "kWh"
         device_class: energy
         state_class: total
+        suggested_display_precision: 1
         icon: mdi:car-electric
         state: >-
           {% set net = states('sensor.elbil_opladning_kwh_fra_nettet_dette_ar') | float(0) %}
@@ -248,6 +273,7 @@ template:
         unique_id: "elbil_total_pris_i_dag_alt"
         unit_of_measurement: "DKK"
         state_class: total
+        suggested_display_precision: 1
         icon: mdi:cash-multiple
         state: >-
           {% set hjemme = states('sensor.elbil_opladning_pris_i_dag') | float(0) %}
@@ -258,6 +284,7 @@ template:
         unique_id: "elbil_total_pris_denne_uge_alt"
         unit_of_measurement: "DKK"
         state_class: total
+        suggested_display_precision: 1
         icon: mdi:cash-multiple
         state: >-
           {% set hjemme = states('sensor.elbil_opladning_pris_denne_uge') | float(0) %}
@@ -268,6 +295,7 @@ template:
         unique_id: "elbil_total_pris_denne_maaned_alt"
         unit_of_measurement: "DKK"
         state_class: total
+        suggested_display_precision: 1
         icon: mdi:cash-multiple
         state: >-
           {% set hjemme = states('sensor.elbil_opladning_pris_denne_maned') | float(0) %}
@@ -278,6 +306,7 @@ template:
         unique_id: "elbil_total_pris_dette_aar_alt"
         unit_of_measurement: "DKK"
         state_class: total
+        suggested_display_precision: 1
         icon: mdi:cash-multiple
         state: >-
           {% set hjemme = states('sensor.elbil_opladning_pris_dette_ar') | float(0) %}

@@ -2,6 +2,10 @@
 # (huset har også en ikke-elbil-relateret "daily_energy_import" meter i
 # den samme sektion, som ikke er taget med her)
 # Se elbilsensorer.md, afsnit 3 og 4.
+#
+# Visning: utility_meter understøtter ikke "suggested_display_precision" i
+# YAML. 1-decimals visning sættes i stedet via Indstillinger → Enheder &
+# tjenester → Entiteter → (tandhjul) → "Præcision" for hver tæller.
 
 utility_meter:
   ev_oplader_kwh_fra_nettet_i_dag:
