@@ -1,0 +1,285 @@
+# Elbil sensorer — udtrukket fra Home Assistants configuration.yaml
+#
+# Dette er de dele af den live "sensor:" (legacy platform-liste) og
+# "template:" konfiguration, der vedrører elbil-opsætningen. Filerne i
+# dette repo er en dokumentations-kopi, ikke noget der direkte inkluderes
+# af Home Assistant — de originale blokke ligger i configuration.yaml på
+# HA-serveren, sammen med resten af husets (ikke-elbil-relaterede) opsætning.
+#
+# Se elbilsensorer.md for en fuld beskrivelse af hvad hver sensor gør, og
+# hvordan beregningerne hænger sammen.
+
+sensor:
+  # Riemann sum integration for EV charging energy bought from the grid
+  - platform: integration
+    source: sensor.elbil_oplader_effekt_fra_nettet
+    name: elbil_oplader_energi_fra_nettet
+    unique_id: elbil_oplader_energi_fra_nettet
+    unit_prefix: k
+    round: 3
+    max_sub_interval:
+      minutes: 5
+
+  # Riemann sum integration for EV charging cost bought from the grid
+  - platform: integration
+    source: sensor.elbil_oplader_dkk_per_time
+    name: elbil_oplader_pris_akkumuleret
+    unique_id: elbil_oplader_pris_akkumuleret
+    round: 2
+    max_sub_interval:
+      minutes: 5
+
+  # Riemann sum integration for EV charging energy covered by solar
+  - platform: integration
+    source: sensor.elbil_oplader_effekt_fra_sol
+    name: elbil_oplader_energi_fra_sol
+    unique_id: elbil_oplader_energi_fra_sol
+    unit_prefix: k
+    round: 3
+    max_sub_interval:
+      minutes: 5
+
+template:
+  - sensor:
+      # EV Charger real AC input power, measured from its own phase currents
+      # (output_power is the DC power delivered to the car battery, which is
+      # a few percent lower than what the charger actually draws from the
+      # house wiring due to AC->DC conversion losses)
+      - name: "Elbil oplader AC effekt"
+        unique_id: "elbil_oplader_ac_effekt"
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        state: >-
+          {% set va = states('sensor.power_meter_phase_a_voltage') | float(0) %}
+          {% set vb = states('sensor.power_meter_phase_b_voltage') | float(0) %}
+          {% set vc = states('sensor.power_meter_phase_c_voltage') | float(0) %}
+          {% set ia = states('sensor.fsp_ne_312821708_phase_a_current') | float(0) %}
+          {% set ib = states('sensor.fsp_ne_312821708_phase_b_current') | float(0) %}
+          {% set ic = states('sensor.fsp_ne_312821708_phase_c_current') | float(0) %}
+          {{ ((va * ia) + (vb * ib) + (vc * ic)) | round(1) }}
+
+      # EV Charging Power sourced from the grid (excl. the solar-covered share)
+      - name: "Elbil oplader effekt fra nettet"
+        unique_id: "elbil_oplader_effekt_fra_nettet"
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        state: >-
+          {% set ev_power = states('sensor.elbil_oplader_ac_effekt') | float(0) %}
+          {% set solar_power = states('sensor.inverter_active_power') | float(0) %}
+          {% set grid_import = [-(states('sensor.power_meter_active_power') | float(0)), 0] | max %}
+          {% set total_supply = solar_power + grid_import %}
+          {% set grid_fraction = (grid_import / total_supply) if total_supply > 0 else 0 %}
+          {{ (ev_power * grid_fraction) | round(1) }}
+
+      # EV Charging Cost Rate (grid-sourced portion only), based on the current spot buy price
+      - name: "Elbil oplader DKK per time"
+        unique_id: "elbil_oplader_dkk_per_time"
+        icon: mdi:speedometer
+        unit_of_measurement: "DKK/h"
+        state_class: measurement
+        state: >-
+          {% set grid_power_kw = states('sensor.elbil_oplader_effekt_fra_nettet') | float(0) / 1000 %}
+          {% set price = states('sensor.el_kob_pris') | float(0) %}
+          {{ (grid_power_kw * price) | round(4) }}
+
+      # Share of current EV charging power coming from solar
+      - name: "Elbil oplader solandel"
+        unique_id: "elbil_oplader_solandel"
+        unit_of_measurement: "%"
+        icon: mdi:solar-power
+        state_class: measurement
+        state: >-
+          {% set ev_power = states('sensor.elbil_oplader_ac_effekt') | float(0) %}
+          {% set grid_power = states('sensor.elbil_oplader_effekt_fra_nettet') | float(0) %}
+          {{ (((ev_power - grid_power) / ev_power * 100) if ev_power > 0 else 0) | round(1) }}
+
+      # EV Charging Power covered by solar (excl. the grid-sourced share)
+      - name: "Elbil oplader effekt fra sol"
+        unique_id: "elbil_oplader_effekt_fra_sol"
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        state: >-
+          {% set ev_power = states('sensor.elbil_oplader_ac_effekt') | float(0) %}
+          {% set grid_power = states('sensor.elbil_oplader_effekt_fra_nettet') | float(0) %}
+          {{ [(ev_power - grid_power), 0] | max | round(1) }}
+
+      # Solar share of EV charging - today
+      - name: "Elbil opladning solandel i dag"
+        unique_id: "elbil_opladning_solandel_i_dag"
+        unit_of_measurement: "%"
+        icon: mdi:solar-power
+        state_class: measurement
+        state: >-
+          {% set net = states('sensor.elbil_opladning_kwh_fra_nettet_i_dag') | float(0) %}
+          {% set sol = states('sensor.elbil_opladning_kwh_fra_sol_i_dag') | float(0) %}
+          {% set total = net + sol %}
+          {{ ((sol / total * 100) if total > 0 else 0) | round(1) }}
+
+      # Solar share of EV charging - this week
+      - name: "Elbil opladning solandel denne uge"
+        unique_id: "elbil_opladning_solandel_denne_uge"
+        unit_of_measurement: "%"
+        icon: mdi:solar-power
+        state_class: measurement
+        state: >-
+          {% set net = states('sensor.elbil_opladning_kwh_fra_nettet_denne_uge') | float(0) %}
+          {% set sol = states('sensor.elbil_opladning_kwh_fra_sol_denne_uge') | float(0) %}
+          {% set total = net + sol %}
+          {{ ((sol / total * 100) if total > 0 else 0) | round(1) }}
+
+      # Solar share of EV charging - this month
+      - name: "Elbil opladning solandel denne måned"
+        unique_id: "elbil_opladning_solandel_denne_maaned"
+        unit_of_measurement: "%"
+        icon: mdi:solar-power
+        state_class: measurement
+        state: >-
+          {% set net = states('sensor.elbil_opladning_kwh_fra_nettet_denne_maned') | float(0) %}
+          {% set sol = states('sensor.elbil_opladning_kwh_fra_sol_denne_maned') | float(0) %}
+          {% set total = net + sol %}
+          {{ ((sol / total * 100) if total > 0 else 0) | round(1) }}
+
+      # Solar share of EV charging - this year
+      - name: "Elbil opladning solandel dette år"
+        unique_id: "elbil_opladning_solandel_dette_aar"
+        unit_of_measurement: "%"
+        icon: mdi:solar-power
+        state_class: measurement
+        state: >-
+          {% set net = states('sensor.elbil_opladning_kwh_fra_nettet_dette_ar') | float(0) %}
+          {% set sol = states('sensor.elbil_opladning_kwh_fra_sol_dette_ar') | float(0) %}
+          {% set total = net + sol %}
+          {{ ((sol / total * 100) if total > 0 else 0) | round(1) }}
+
+      # Externally purchased EV charging (public chargers) - lifetime totals
+      - name: "Elbil ekstern opladning kWh total"
+        unique_id: "elbil_ekstern_opladning_kwh_total"
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total
+        icon: mdi:ev-station
+        state: "{{ states('input_number.elbil_ekstern_kwh_total') | float(0) }}"
+
+      - name: "Elbil ekstern opladning pris total"
+        unique_id: "elbil_ekstern_opladning_pris_total"
+        unit_of_measurement: "DKK"
+        state_class: total
+        icon: mdi:cash-multiple
+        state: "{{ states('input_number.elbil_ekstern_pris_total') | float(0) }}"
+
+      # Combined grand totals (home + external) - does NOT feed into the
+      # home solandel calculation, which stays scoped to home charging only
+      - name: "Elbil total kWh (hjemme og ekstern)"
+        unique_id: "elbil_total_kwh_alt"
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total
+        icon: mdi:car-electric
+        state: >-
+          {% set hjemme_net = states('sensor.elbil_oplader_energi_fra_nettet') | float(0) %}
+          {% set hjemme_sol = states('sensor.elbil_oplader_energi_fra_sol') | float(0) %}
+          {% set ekstern = states('input_number.elbil_ekstern_kwh_total') | float(0) %}
+          {{ (hjemme_net + hjemme_sol + ekstern) | round(3) }}
+
+      - name: "Elbil total pris (hjemme og ekstern)"
+        unique_id: "elbil_total_pris_alt"
+        unit_of_measurement: "DKK"
+        state_class: total
+        icon: mdi:cash-multiple
+        state: >-
+          {% set hjemme = states('sensor.elbil_oplader_pris_akkumuleret') | float(0) %}
+          {% set ekstern = states('input_number.elbil_ekstern_pris_total') | float(0) %}
+          {{ (hjemme + ekstern) | round(2) }}
+
+      # Combined totals per period (home + external) - kWh
+      - name: "Elbil total kWh i dag (hjemme og ekstern)"
+        unique_id: "elbil_total_kwh_i_dag_alt"
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total
+        icon: mdi:car-electric
+        state: >-
+          {% set net = states('sensor.elbil_opladning_kwh_fra_nettet_i_dag') | float(0) %}
+          {% set sol = states('sensor.elbil_opladning_kwh_fra_sol_i_dag') | float(0) %}
+          {% set ekstern = states('sensor.elbil_ekstern_opladning_kwh_i_dag') | float(0) %}
+          {{ (net + sol + ekstern) | round(3) }}
+
+      - name: "Elbil total kWh denne uge (hjemme og ekstern)"
+        unique_id: "elbil_total_kwh_denne_uge_alt"
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total
+        icon: mdi:car-electric
+        state: >-
+          {% set net = states('sensor.elbil_opladning_kwh_fra_nettet_denne_uge') | float(0) %}
+          {% set sol = states('sensor.elbil_opladning_kwh_fra_sol_denne_uge') | float(0) %}
+          {% set ekstern = states('sensor.elbil_ekstern_opladning_kwh_denne_uge') | float(0) %}
+          {{ (net + sol + ekstern) | round(3) }}
+
+      - name: "Elbil total kWh denne måned (hjemme og ekstern)"
+        unique_id: "elbil_total_kwh_denne_maaned_alt"
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total
+        icon: mdi:car-electric
+        state: >-
+          {% set net = states('sensor.elbil_opladning_kwh_fra_nettet_denne_maned') | float(0) %}
+          {% set sol = states('sensor.elbil_opladning_kwh_fra_sol_denne_maned') | float(0) %}
+          {% set ekstern = states('sensor.elbil_ekstern_opladning_kwh_denne_maned') | float(0) %}
+          {{ (net + sol + ekstern) | round(3) }}
+
+      - name: "Elbil total kWh dette år (hjemme og ekstern)"
+        unique_id: "elbil_total_kwh_dette_aar_alt"
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total
+        icon: mdi:car-electric
+        state: >-
+          {% set net = states('sensor.elbil_opladning_kwh_fra_nettet_dette_ar') | float(0) %}
+          {% set sol = states('sensor.elbil_opladning_kwh_fra_sol_dette_ar') | float(0) %}
+          {% set ekstern = states('sensor.elbil_ekstern_opladning_kwh_dette_ar') | float(0) %}
+          {{ (net + sol + ekstern) | round(3) }}
+
+      # Combined totals per period (home + external) - price
+      - name: "Elbil total pris i dag (hjemme og ekstern)"
+        unique_id: "elbil_total_pris_i_dag_alt"
+        unit_of_measurement: "DKK"
+        state_class: total
+        icon: mdi:cash-multiple
+        state: >-
+          {% set hjemme = states('sensor.elbil_opladning_pris_i_dag') | float(0) %}
+          {% set ekstern = states('sensor.elbil_ekstern_opladning_pris_i_dag') | float(0) %}
+          {{ (hjemme + ekstern) | round(2) }}
+
+      - name: "Elbil total pris denne uge (hjemme og ekstern)"
+        unique_id: "elbil_total_pris_denne_uge_alt"
+        unit_of_measurement: "DKK"
+        state_class: total
+        icon: mdi:cash-multiple
+        state: >-
+          {% set hjemme = states('sensor.elbil_opladning_pris_denne_uge') | float(0) %}
+          {% set ekstern = states('sensor.elbil_ekstern_opladning_pris_denne_uge') | float(0) %}
+          {{ (hjemme + ekstern) | round(2) }}
+
+      - name: "Elbil total pris denne måned (hjemme og ekstern)"
+        unique_id: "elbil_total_pris_denne_maaned_alt"
+        unit_of_measurement: "DKK"
+        state_class: total
+        icon: mdi:cash-multiple
+        state: >-
+          {% set hjemme = states('sensor.elbil_opladning_pris_denne_maned') | float(0) %}
+          {% set ekstern = states('sensor.elbil_ekstern_opladning_pris_denne_maned') | float(0) %}
+          {{ (hjemme + ekstern) | round(2) }}
+
+      - name: "Elbil total pris dette år (hjemme og ekstern)"
+        unique_id: "elbil_total_pris_dette_aar_alt"
+        unit_of_measurement: "DKK"
+        state_class: total
+        icon: mdi:cash-multiple
+        state: >-
+          {% set hjemme = states('sensor.elbil_opladning_pris_dette_ar') | float(0) %}
+          {% set ekstern = states('sensor.elbil_ekstern_opladning_pris_dette_ar') | float(0) %}
+          {{ (hjemme + ekstern) | round(2) }}

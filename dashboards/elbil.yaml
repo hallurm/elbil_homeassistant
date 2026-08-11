@@ -1,0 +1,198 @@
+title: Elbil
+views:
+  - title: Elbil opladning
+    path: elbil-opladning
+    icon: mdi:car-electric
+    cards:
+      - type: heading
+        heading: Lige nu
+      - type: glance
+        title: Live status
+        columns: 3
+        entities:
+          - entity: sensor.fsp_ne_312821708_status
+            name: Ladestatus
+          - entity: sensor.fsp_ne_312821708_output_power
+            name: Ladeeffekt (total)
+          - entity: sensor.elbil_oplader_solandel
+            name: Solandel
+
+      - type: entities
+        title: Beregnet fordeling (lige nu)
+        entities:
+          - entity: sensor.elbil_oplader_effekt_fra_nettet
+            name: Effekt fra nettet
+          - entity: sensor.elbil_oplader_effekt_fra_sol
+            name: Effekt fra sol
+          - entity: sensor.elbil_oplader_dkk_per_time
+            name: Omkostning lige nu
+          - entity: sensor.elbil_oplader_solandel
+            name: Solandel
+
+      - type: heading
+        heading: Rådata (til verificering)
+      - type: entities
+        title: Kilder beregningen bruger
+        show_header_toggle: false
+        entities:
+          - entity: sensor.fsp_ne_312821708_output_power
+            name: Elbil-oplader DC effekt (til batteri)
+          - entity: sensor.elbil_oplader_ac_effekt
+            name: Elbil-oplader AC effekt (fra ledningsnet)
+          - entity: sensor.fsp_ne_312821708_status
+            name: Elbil-oplader status
+          - entity: sensor.inverter_active_power
+            name: Solcelleproduktion (hus)
+          - entity: sensor.power_meter_active_power
+            name: Elmåler (+ = eksport, - = import)
+          - entity: sensor.el_kob_pris
+            name: Aktuel EL køb pris
+
+      - type: heading
+        heading: Akkumuleret
+      - type: grid
+        columns: 2
+        square: false
+        cards:
+          - type: entities
+            title: I dag
+            entities:
+              - entity: sensor.elbil_opladning_kwh_fra_nettet_i_dag
+                name: kWh fra nettet (hjemme)
+              - entity: sensor.elbil_opladning_kwh_fra_sol_i_dag
+                name: kWh fra sol (hjemme)
+              - entity: sensor.elbil_ekstern_opladning_kwh_i_dag
+                name: kWh ekstern
+              - entity: sensor.elbil_opladning_solandel_i_dag
+                name: Solandel (kun hjemme)
+              - entity: sensor.elbil_total_kwh_i_dag_hjemme_og_ekstern
+                name: Total kWh
+              - entity: sensor.elbil_opladning_pris_i_dag
+                name: Pris (hjemme)
+              - entity: sensor.elbil_ekstern_opladning_pris_i_dag
+                name: Pris (ekstern)
+              - entity: sensor.elbil_total_pris_i_dag_hjemme_og_ekstern
+                name: Total pris
+          - type: entities
+            title: Denne uge
+            entities:
+              - entity: sensor.elbil_opladning_kwh_fra_nettet_denne_uge
+                name: kWh fra nettet (hjemme)
+              - entity: sensor.elbil_opladning_kwh_fra_sol_denne_uge
+                name: kWh fra sol (hjemme)
+              - entity: sensor.elbil_ekstern_opladning_kwh_denne_uge
+                name: kWh ekstern
+              - entity: sensor.elbil_opladning_solandel_denne_uge
+                name: Solandel (kun hjemme)
+              - entity: sensor.elbil_total_kwh_denne_uge_hjemme_og_ekstern
+                name: Total kWh
+              - entity: sensor.elbil_opladning_pris_denne_uge
+                name: Pris (hjemme)
+              - entity: sensor.elbil_ekstern_opladning_pris_denne_uge
+                name: Pris (ekstern)
+              - entity: sensor.elbil_total_pris_denne_uge_hjemme_og_ekstern
+                name: Total pris
+          - type: entities
+            title: Denne måned
+            entities:
+              - entity: sensor.elbil_opladning_kwh_fra_nettet_denne_maned
+                name: kWh fra nettet (hjemme)
+              - entity: sensor.elbil_opladning_kwh_fra_sol_denne_maned
+                name: kWh fra sol (hjemme)
+              - entity: sensor.elbil_ekstern_opladning_kwh_denne_maned
+                name: kWh ekstern
+              - entity: sensor.elbil_opladning_solandel_denne_maned
+                name: Solandel (kun hjemme)
+              - entity: sensor.elbil_total_kwh_denne_maned_hjemme_og_ekstern
+                name: Total kWh
+              - entity: sensor.elbil_opladning_pris_denne_maned
+                name: Pris (hjemme)
+              - entity: sensor.elbil_ekstern_opladning_pris_denne_maned
+                name: Pris (ekstern)
+              - entity: sensor.elbil_total_pris_denne_maned_hjemme_og_ekstern
+                name: Total pris
+          - type: entities
+            title: Dette år
+            entities:
+              - entity: sensor.elbil_opladning_kwh_fra_nettet_dette_ar
+                name: kWh fra nettet (hjemme)
+              - entity: sensor.elbil_opladning_kwh_fra_sol_dette_ar
+                name: kWh fra sol (hjemme)
+              - entity: sensor.elbil_ekstern_opladning_kwh_dette_ar
+                name: kWh ekstern
+              - entity: sensor.elbil_opladning_solandel_dette_ar
+                name: Solandel (kun hjemme)
+              - entity: sensor.elbil_total_kwh_dette_ar_hjemme_og_ekstern
+                name: Total kWh
+              - entity: sensor.elbil_opladning_pris_dette_ar
+                name: Pris (hjemme)
+              - entity: sensor.elbil_ekstern_opladning_pris_dette_ar
+                name: Pris (ekstern)
+              - entity: sensor.elbil_total_pris_dette_ar_hjemme_og_ekstern
+                name: Total pris
+
+      - type: heading
+        heading: Levetids-akkumulatorer (siden sensor oprettet)
+      - type: entities
+        show_header_toggle: false
+        entities:
+          - entity: sensor.elbil_oplader_energi_fra_nettet
+            name: Total energi fra nettet
+          - entity: sensor.elbil_oplader_energi_fra_sol
+            name: Total energi fra sol
+          - entity: sensor.elbil_oplader_pris_akkumuleret
+            name: Total pris
+
+      - type: heading
+        heading: Batteri-automatisering
+      - type: entities
+        title: Styring af husbatteriets afladning
+        entities:
+          - entity: automation.elbil_oplader_deaktiver_batteri_afladning
+            name: Automatisering aktiv
+          - entity: number.battery_maximum_discharging_power
+            name: Batteri maks. afladningseffekt (nu)
+          - entity: input_number.battery_discharge_power_before_ev_charging
+            name: Gemt værdi (før opladning)
+
+      - type: history-graph
+        title: Effektfordeling seneste 24 timer
+        hours_to_show: 24
+        entities:
+          - entity: sensor.elbil_oplader_effekt_fra_nettet
+            name: Fra nettet
+          - entity: sensor.elbil_oplader_effekt_fra_sol
+            name: Fra sol
+
+      - type: heading
+        heading: Ekstern opladning (ladestandere ude i byen)
+      - type: entities
+        title: Indtast efter en ekstern opladning
+        show_header_toggle: false
+        entities:
+          - entity: input_number.elbil_ekstern_kwh_indtastning
+            name: kWh købt
+          - entity: input_number.elbil_ekstern_pris_indtastning
+            name: Pris betalt
+          - entity: script.elbil_gem_ekstern_opladning
+            name: Gem opladning
+      - type: entities
+        title: Ekstern opladning - total
+        show_header_toggle: false
+        entities:
+          - entity: sensor.elbil_ekstern_opladning_kwh_total
+            name: kWh i alt
+          - entity: sensor.elbil_ekstern_opladning_pris_total
+            name: Pris i alt
+
+      - type: heading
+        heading: Samlet regnskab (hjemme + ekstern)
+      - type: entities
+        show_header_toggle: false
+        entities:
+          - entity: sensor.elbil_total_kwh_hjemme_og_ekstern
+            name: Total kWh
+          - entity: sensor.elbil_total_pris_hjemme_og_ekstern
+            name: Total pris
+          - entity: sensor.elbil_opladning_solandel_dette_ar
+            name: Solandel (kun hjemmeopladning)

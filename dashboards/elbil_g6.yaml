@@ -1,0 +1,441 @@
+# Elbil "G6" dashboard — udtrukket fra Home Assistants storage-mode
+# lovelace-konfiguration (dashboard-id "dashboard_g6", url_path
+# "dashboard-g6") og konverteret fra JSON til YAML for læsbarhedens skyld.
+#
+# Dette er IKKE en fil Home Assistant selv læser fra (storage-mode
+# dashboards gemmes internt i .storage/lovelace.dashboard_g6 som JSON,
+# redigeret via UI'et) — det er en dokumentations-/backup-kopi.
+#
+# Fem faner: I dag / Uge / Måned / År / Total. Bruger mushroom-cards til
+# øjebliks-/periodetal og apexcharts-card til søjlediagrammer og
+# elpris-grafen. Se elbilsensorer.md for hvad de bagvedliggende sensorer
+# betyder (dashboard-opbygningen i sig selv er ikke dokumenteret der).
+
+views:
+- type: sections
+  theme: Frosted Glass
+  max_columns: 3
+  title: I dag
+  badges:
+  - type: entity
+    entity: sensor.fsp_ne_312821708_status
+  - type: entity
+    entity: sensor.fsp_ne_312821708_output_power
+  - type: entity
+    entity: sensor.elbil_oplader_solandel
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Lige nu
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_oplader_effekt_fra_nettet
+      name: Effekt fra nettet
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_oplader_effekt_fra_sol
+      name: Effekt fra sol
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_oplader_dkk_per_time
+      name: Omkostning lige nu
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_oplader_solandel
+      name: Solandel lige nu
+  - type: grid
+    cards:
+    - type: heading
+      heading: I dag - hjemme
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_opladning_kwh_fra_nettet_i_dag
+      name: kWh fra nettet
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_opladning_kwh_fra_sol_i_dag
+      name: kWh fra sol
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_opladning_solandel_i_dag
+      name: Solandel i dag
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_opladning_pris_i_dag
+      name: Pris (hjemme)
+  - type: grid
+    cards:
+    - type: heading
+      heading: I dag - ekstern og total
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_ekstern_opladning_kwh_i_dag
+      name: kWh ekstern
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_ekstern_opladning_pris_i_dag
+      name: Pris ekstern
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_total_kwh_i_dag_hjemme_og_ekstern
+      name: Total kWh
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_total_pris_i_dag_hjemme_og_ekstern
+      name: Total pris
+  - type: grid
+    cards:
+    - type: heading
+      heading: Husbatteri-automatisering
+      heading_style: title
+    - type: custom:mushroom-entity-card
+      entity: automation.elbil_oplader_deaktiver_batteri_afladning
+      name: Automatisering aktiv
+    - type: custom:mushroom-entity-card
+      entity: number.battery_maximum_discharging_power
+      name: Batteri maks. afladning
+  - type: grid
+    cards:
+    - type: heading
+      heading: Ekstern opladning (ladestandere)
+    - type: entities
+      show_header_toggle: false
+      card_mod:
+        style: |
+          ha-card {
+            background: transparent;
+            border: none;
+            box-shadow: 0 4px 16px rgba(31, 41, 55, 0.08);
+            border-radius: 18px;
+          }
+          #states {
+            padding: 14px 18px;
+            gap: 10px;
+          }
+      entities:
+      - entity: input_number.elbil_ekstern_kwh_indtastning
+        name: kWh købt
+        card_mod:
+          style:
+            hui-generic-entity-row$: |
+              state-badge {
+                color: rgb(76, 132, 209);
+                background-color: rgba(76, 132, 209, 0.15);
+                border-radius: 50%;
+                padding: 8px;
+                --mdc-icon-size: 20px;
+              }
+      - entity: input_number.elbil_ekstern_pris_indtastning
+        name: Pris betalt
+        card_mod:
+          style:
+            hui-generic-entity-row$: |
+              state-badge {
+                color: rgb(76, 132, 209);
+                background-color: rgba(76, 132, 209, 0.15);
+                border-radius: 50%;
+                padding: 8px;
+                --mdc-icon-size: 20px;
+              }
+    - type: custom:mushroom-template-card
+      primary: Gem opladning
+      secondary: Tryk for at lægge til den samlede eksterne total
+      icon: mdi:content-save-check
+      icon_color: green
+      tap_action:
+        action: perform-action
+        perform_action: script.turn_on
+        target:
+          entity_id: script.elbil_gem_ekstern_opladning
+      card_mod:
+        style: |
+          ha-card {
+            background: rgba(76, 175, 80, 0.12);
+            border: 1px solid rgba(76, 175, 80, 0.4);
+          }
+          ha-card:active {
+            background: rgba(76, 175, 80, 0.25);
+          }
+  - type: grid
+    cards:
+    - type: heading
+      heading: Elpriser – bedste ladetidspunkter
+    - type: custom:mushroom-template-card
+      primary: |-
+        {% set ns = namespace(f=[]) %}{% set data = (state_attr('sensor.el_kob_pris','raw_today') or []) + (state_attr('sensor.el_kob_pris','raw_tomorrow') or []) %}{% set cur = now().replace(minute=0, second=0, microsecond=0) %}{% for i in data %}{% if as_datetime(i.hour) >= cur %}{% set ns.f = ns.f + [i] %}{% endif %}{% endfor %}{% if ns.f | length > 0 %}{% set b = (ns.f | sort(attribute='price'))[0] %}{{ as_timestamp(b.hour) | timestamp_custom('%H:%M', true) }} – {{ b.price | round(2) }} kr/kWh{% else %}Ingen prisdata{% endif %}
+      secondary: |-
+        {% set ns = namespace(f=[]) %}{% set data = (state_attr('sensor.el_kob_pris','raw_today') or []) + (state_attr('sensor.el_kob_pris','raw_tomorrow') or []) %}{% set cur = now().replace(minute=0, second=0, microsecond=0) %}{% for i in data %}{% if as_datetime(i.hour) >= cur %}{% set ns.f = ns.f + [i] %}{% endif %}{% endfor %}{% if ns.f | length > 0 %}{% set b = (ns.f | sort(attribute='price'))[0] %}{% set secs = (as_timestamp(b.hour) - as_timestamp(now())) | int %}{% if secs <= 0 %}Lige nu – lad nu!{% else %}{% set h = (secs // 3600) | int %}{% set m = ((secs % 3600) // 60) | int %}Starter om {% if h > 0 %}{{ h }} t {% endif %}{{ m }} min{% endif %}{% else %}–{% endif %}
+      icon: mdi:cash-clock
+      icon_color: green
+      multiline_secondary: true
+    - type: custom:mushroom-template-card
+      primary: Billigste ladevindue
+      secondary: |-
+        {% set ns = namespace(f=[]) %}{% set data = (state_attr('sensor.el_kob_pris','raw_today') or []) + (state_attr('sensor.el_kob_pris','raw_tomorrow') or []) %}{% set cur = now().replace(minute=0, second=0, microsecond=0) %}{% for i in data %}{% if as_datetime(i.hour) >= cur %}{% set ns.f = ns.f + [i] %}{% endif %}{% endfor %}{% if ns.f | length > 0 %}{% set pr = ns.f | map(attribute='price') | list %}{% set mn = pr | min %}{% set thr = [mn * 1.3, mn + 0.20] | max %}{% set mi = namespace(idx=-1) %}{% for x in pr %}{% if mi.idx == -1 and x == mn %}{% set mi.idx = loop.index0 %}{% endif %}{% endfor %}{% set L = namespace(i=mi.idx, stop=false) %}{% for k in range(mi.idx - 1, -1, -1) %}{% if not L.stop %}{% if pr[k] <= thr %}{% set L.i = k %}{% else %}{% set L.stop = true %}{% endif %}{% endif %}{% endfor %}{% set R = namespace(i=mi.idx, stop=false) %}{% for k in range(mi.idx + 1, pr | length) %}{% if not R.stop %}{% if pr[k] <= thr %}{% set R.i = k %}{% else %}{% set R.stop = true %}{% endif %}{% endif %}{% endfor %}{% set win = ns.f[L.i:R.i + 1] %}{% set avg = (win | map(attribute='price') | sum) / (win | length) %}{{ as_timestamp(win[0].hour) | timestamp_custom('%H:%M', true) }}–{{ (as_timestamp(win[-1].hour) + 3600) | timestamp_custom('%H:%M', true) }} · {{ win | length }} timer · snit {{ avg | round(2) }} kr/kWh{% else %}Ingen prisdata{% endif %}
+      icon: mdi:ev-station
+      icon_color: teal
+      multiline_secondary: true
+    - type: custom:apexcharts-card
+      header:
+        show: true
+        title: Elpris pr. time (i dag / i morgen)
+        show_states: false
+      graph_span: 48h
+      span:
+        start: day
+      experimental:
+        color_threshold: true
+      now:
+        show: true
+        label: Nu
+      apex_config:
+        legend:
+          show: false
+        chart:
+          height: 220
+        xaxis:
+          labels:
+            format: HH
+      series:
+      - entity: sensor.el_kob_pris
+        name: Pris
+        type: column
+        unit: ' kr/kWh'
+        float_precision: 2
+        data_generator: |-
+          const t = entity.attributes.raw_today || [];
+          const m = entity.attributes.raw_tomorrow || [];
+          return [...t, ...m].map(e => [new Date(e.hour).getTime(), e.price]);
+        color_threshold:
+        - value: 0
+          color: '#22c55e'
+        - value: 1.5
+          color: '#eab308'
+        - value: 2.5
+          color: '#ef4444'
+- type: sections
+  theme: Frosted Glass
+  max_columns: 4
+  title: Uge
+  path: denne-uge
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Denne uge
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_opladning_kwh_fra_nettet_denne_uge
+      name: kWh fra nettet
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_opladning_kwh_fra_sol_denne_uge
+      name: kWh fra sol
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_opladning_solandel_denne_uge
+      name: Solandel
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_opladning_pris_denne_uge
+      name: Pris (hjemme)
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_ekstern_opladning_kwh_denne_uge
+      name: kWh ekstern
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_ekstern_opladning_pris_denne_uge
+      name: Pris ekstern
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_total_kwh_denne_uge_hjemme_og_ekstern
+      name: Total kWh
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_total_pris_denne_uge_hjemme_og_ekstern
+      name: Total pris
+  - type: grid
+    cards:
+    - type: heading
+      heading: Historik - seneste 7 dage
+    - type: custom:apexcharts-card
+      header:
+        show: true
+        title: kWh pr. dag (hjemme)
+        show_states: false
+      graph_span: 7d
+      span:
+        end: day
+      apex_config:
+        chart:
+          stacked: true
+        legend:
+          show: true
+      series:
+      - entity: sensor.elbil_oplader_energi_fra_nettet
+        name: Fra nettet
+        type: column
+        color: '#3b82f6'
+        statistics:
+          type: change
+          period: day
+      - entity: sensor.elbil_oplader_energi_fra_sol
+        name: Fra sol
+        type: column
+        color: '#f59e0b'
+        statistics:
+          type: change
+          period: day
+- type: sections
+  theme: Frosted Glass
+  max_columns: 4
+  title: Måned
+  path: maned
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Denne måned
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_opladning_kwh_fra_nettet_denne_maned
+      name: kWh fra nettet
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_opladning_kwh_fra_sol_denne_maned
+      name: kWh fra sol
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_opladning_solandel_denne_maned
+      name: Solandel
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_opladning_pris_denne_maned
+      name: Pris (hjemme)
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_ekstern_opladning_kwh_denne_maned
+      name: kWh ekstern
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_ekstern_opladning_pris_denne_maned
+      name: Pris ekstern
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_total_kwh_denne_maned_hjemme_og_ekstern
+      name: Total kWh
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_total_pris_denne_maned_hjemme_og_ekstern
+      name: Total pris
+  - type: grid
+    cards:
+    - type: heading
+      heading: Historik - denne måned
+    - type: custom:apexcharts-card
+      header:
+        show: true
+        title: kWh pr. dag (hjemme)
+        show_states: false
+      graph_span: 31d
+      span:
+        start: month
+      apex_config:
+        chart:
+          stacked: true
+        legend:
+          show: true
+      series:
+      - entity: sensor.elbil_oplader_energi_fra_nettet
+        name: Fra nettet
+        type: column
+        color: '#3b82f6'
+        statistics:
+          type: change
+          period: day
+      - entity: sensor.elbil_oplader_energi_fra_sol
+        name: Fra sol
+        type: column
+        color: '#f59e0b'
+        statistics:
+          type: change
+          period: day
+- type: sections
+  theme: Frosted Glass
+  max_columns: 4
+  title: År
+  path: ar
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Dette år
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_opladning_kwh_fra_nettet_dette_ar
+      name: kWh fra nettet
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_opladning_kwh_fra_sol_dette_ar
+      name: kWh fra sol
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_opladning_solandel_dette_ar
+      name: Solandel
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_opladning_pris_dette_ar
+      name: Pris (hjemme)
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_ekstern_opladning_kwh_dette_ar
+      name: kWh ekstern
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_ekstern_opladning_pris_dette_ar
+      name: Pris ekstern
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_total_kwh_dette_ar_hjemme_og_ekstern
+      name: Total kWh
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_total_pris_dette_ar_hjemme_og_ekstern
+      name: Total pris
+  - type: grid
+    cards:
+    - type: heading
+      heading: Historik - dette år
+    - type: custom:apexcharts-card
+      header:
+        show: true
+        title: kWh pr. måned (hjemme)
+        show_states: false
+      graph_span: 366d
+      span:
+        start: year
+      apex_config:
+        chart:
+          stacked: true
+        legend:
+          show: true
+      series:
+      - entity: sensor.elbil_oplader_energi_fra_nettet
+        name: Fra nettet
+        type: column
+        color: '#3b82f6'
+        statistics:
+          type: change
+          period: month
+      - entity: sensor.elbil_oplader_energi_fra_sol
+        name: Fra sol
+        type: column
+        color: '#f59e0b'
+        statistics:
+          type: change
+          period: month
+- type: sections
+  theme: Frosted Glass
+  max_columns: 4
+  title: Total
+  path: total
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Levetid - hjemme
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_oplader_energi_fra_nettet
+      name: Total energi fra nettet
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_oplader_energi_fra_sol
+      name: Total energi fra sol
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_oplader_pris_akkumuleret
+      name: Total pris (hjemme)
+  - type: grid
+    cards:
+    - type: heading
+      heading: Levetid - ekstern
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_ekstern_opladning_kwh_total
+      name: Total kWh ekstern
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_ekstern_opladning_pris_total
+      name: Total pris ekstern
+  - type: grid
+    cards:
+    - type: heading
+      heading: Levetid - samlet
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_total_kwh_hjemme_og_ekstern
+      name: Total kWh
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_total_pris_hjemme_og_ekstern
+      name: Total pris

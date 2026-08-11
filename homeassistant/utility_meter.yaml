@@ -1,0 +1,125 @@
+# Elbil utility_meter periodetællere — udtrukket fra configuration.yaml
+# (huset har også en ikke-elbil-relateret "daily_energy_import" meter i
+# den samme sektion, som ikke er taget med her)
+# Se elbilsensorer.md, afsnit 3 og 4.
+
+utility_meter:
+  ev_oplader_kwh_fra_nettet_i_dag:
+    source: sensor.elbil_oplader_energi_fra_nettet
+    name: "Elbil opladning kWh fra nettet i dag"
+    unique_id: ev_oplader_kwh_fra_nettet_i_dag
+    cycle: daily
+
+  ev_oplader_kwh_fra_nettet_denne_uge:
+    source: sensor.elbil_oplader_energi_fra_nettet
+    name: "Elbil opladning kWh fra nettet denne uge"
+    unique_id: ev_oplader_kwh_fra_nettet_denne_uge
+    cycle: weekly
+
+  ev_oplader_kwh_fra_nettet_denne_maaned:
+    source: sensor.elbil_oplader_energi_fra_nettet
+    name: "Elbil opladning kWh fra nettet denne måned"
+    unique_id: ev_oplader_kwh_fra_nettet_denne_maaned
+    cycle: monthly
+
+  ev_oplader_kwh_fra_nettet_dette_aar:
+    source: sensor.elbil_oplader_energi_fra_nettet
+    name: "Elbil opladning kWh fra nettet dette år"
+    unique_id: ev_oplader_kwh_fra_nettet_dette_aar
+    cycle: yearly
+
+  ev_oplader_kwh_fra_sol_i_dag:
+    source: sensor.elbil_oplader_energi_fra_sol
+    name: "Elbil opladning kWh fra sol i dag"
+    unique_id: ev_oplader_kwh_fra_sol_i_dag
+    cycle: daily
+
+  ev_oplader_kwh_fra_sol_denne_uge:
+    source: sensor.elbil_oplader_energi_fra_sol
+    name: "Elbil opladning kWh fra sol denne uge"
+    unique_id: ev_oplader_kwh_fra_sol_denne_uge
+    cycle: weekly
+
+  ev_oplader_kwh_fra_sol_denne_maaned:
+    source: sensor.elbil_oplader_energi_fra_sol
+    name: "Elbil opladning kWh fra sol denne måned"
+    unique_id: ev_oplader_kwh_fra_sol_denne_maaned
+    cycle: monthly
+
+  ev_oplader_kwh_fra_sol_dette_aar:
+    source: sensor.elbil_oplader_energi_fra_sol
+    name: "Elbil opladning kWh fra sol dette år"
+    unique_id: ev_oplader_kwh_fra_sol_dette_aar
+    cycle: yearly
+
+  ev_oplader_pris_i_dag:
+    source: sensor.elbil_oplader_pris_akkumuleret
+    name: "Elbil opladning pris i dag"
+    unique_id: ev_oplader_pris_i_dag
+    cycle: daily
+
+  ev_oplader_pris_denne_uge:
+    source: sensor.elbil_oplader_pris_akkumuleret
+    name: "Elbil opladning pris denne uge"
+    unique_id: ev_oplader_pris_denne_uge
+    cycle: weekly
+
+  ev_oplader_pris_denne_maaned:
+    source: sensor.elbil_oplader_pris_akkumuleret
+    name: "Elbil opladning pris denne måned"
+    unique_id: ev_oplader_pris_denne_maaned
+    cycle: monthly
+
+  ev_oplader_pris_dette_aar:
+    source: sensor.elbil_oplader_pris_akkumuleret
+    name: "Elbil opladning pris dette år"
+    unique_id: ev_oplader_pris_dette_aar
+    cycle: yearly
+
+  ev_ekstern_kwh_i_dag:
+    source: sensor.elbil_ekstern_opladning_kwh_total
+    name: "Elbil ekstern opladning kWh i dag"
+    unique_id: ev_ekstern_kwh_i_dag
+    cycle: daily
+
+  ev_ekstern_kwh_denne_uge:
+    source: sensor.elbil_ekstern_opladning_kwh_total
+    name: "Elbil ekstern opladning kWh denne uge"
+    unique_id: ev_ekstern_kwh_denne_uge
+    cycle: weekly
+
+  ev_ekstern_kwh_denne_maaned:
+    source: sensor.elbil_ekstern_opladning_kwh_total
+    name: "Elbil ekstern opladning kWh denne måned"
+    unique_id: ev_ekstern_kwh_denne_maaned
+    cycle: monthly
+
+  ev_ekstern_kwh_dette_aar:
+    source: sensor.elbil_ekstern_opladning_kwh_total
+    name: "Elbil ekstern opladning kWh dette år"
+    unique_id: ev_ekstern_kwh_dette_aar
+    cycle: yearly
+
+  ev_ekstern_pris_i_dag:
+    source: sensor.elbil_ekstern_opladning_pris_total
+    name: "Elbil ekstern opladning pris i dag"
+    unique_id: ev_ekstern_pris_i_dag
+    cycle: daily
+
+  ev_ekstern_pris_denne_uge:
+    source: sensor.elbil_ekstern_opladning_pris_total
+    name: "Elbil ekstern opladning pris denne uge"
+    unique_id: ev_ekstern_pris_denne_uge
+    cycle: weekly
+
+  ev_ekstern_pris_denne_maaned:
+    source: sensor.elbil_ekstern_opladning_pris_total
+    name: "Elbil ekstern opladning pris denne måned"
+    unique_id: ev_ekstern_pris_denne_maaned
+    cycle: monthly
+
+  ev_ekstern_pris_dette_aar:
+    source: sensor.elbil_ekstern_opladning_pris_total
+    name: "Elbil ekstern opladning pris dette år"
+    unique_id: ev_ekstern_pris_dette_aar
+    cycle: yearly

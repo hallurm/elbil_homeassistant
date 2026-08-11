@@ -1,0 +1,33 @@
+# Elbil-script — udtrukket fra scripts.yaml
+# Se elbilsensorer.md, afsnit 4.
+
+elbil_gem_ekstern_opladning:
+  alias: "Elbil - gem ekstern opladning"
+  description: Lægger de indtastede kWh og pris til den samlede eksterne total,
+    og nulstiller indtastningsfelterne til 0.
+  sequence:
+  - action: input_number.set_value
+    target:
+      entity_id: input_number.elbil_ekstern_kwh_total
+    data:
+      value: >-
+        {{ states('input_number.elbil_ekstern_kwh_total') | float(0) +
+           states('input_number.elbil_ekstern_kwh_indtastning') | float(0) }}
+  - action: input_number.set_value
+    target:
+      entity_id: input_number.elbil_ekstern_pris_total
+    data:
+      value: >-
+        {{ states('input_number.elbil_ekstern_pris_total') | float(0) +
+           states('input_number.elbil_ekstern_pris_indtastning') | float(0) }}
+  - action: input_number.set_value
+    target:
+      entity_id: input_number.elbil_ekstern_kwh_indtastning
+    data:
+      value: 0
+  - action: input_number.set_value
+    target:
+      entity_id: input_number.elbil_ekstern_pris_indtastning
+    data:
+      value: 0
+  mode: single

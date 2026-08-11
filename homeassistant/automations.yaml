@@ -1,0 +1,54 @@
+# Elbil-automatisering — udtrukket fra automations.yaml
+# Se elbilsensorer.md, afsnit 6.
+
+- id: '1785011598758'
+  alias: Elbil oplader - styr batteri-afladning
+  description: Sætter husets batteri max afladningseffekt til 0 W når elbilen begynder
+    at lade (matcher enhver status der indeholder "Charging", undtagen "Waiting"/"Ends"
+    varianter - fx "Charging", "Starting Charging", "PV Power Charging"), og genopretter
+    den tidligere værdi igen når opladningen stopper.
+  triggers:
+  - trigger: state
+    entity_id: sensor.fsp_ne_312821708_status
+  conditions: []
+  actions:
+  - variables:
+      was_charging: >-
+        {% set s = trigger.from_state.state | lower %}
+        {{ 'charging' in s and 'waiting' not in s and 'ends' not in s }}
+      is_charging: >-
+        {% set s = trigger.to_state.state | lower %}
+        {{ 'charging' in s and 'waiting' not in s and 'ends' not in s }}
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: "{{ is_charging and not was_charging }}"
+      - condition: not
+        conditions:
+        - condition: state
+          entity_id: number.battery_maximum_discharging_power
+          state: '0'
+      sequence:
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.battery_discharge_power_before_ev_charging
+        data:
+          value: '{{ states(''number.battery_maximum_discharging_power'') | float(2000) }}'
+      - action: number.set_value
+        target:
+          entity_id: number.battery_maximum_discharging_power
+        data:
+          value: 0
+    - conditions:
+      - condition: template
+        value_template: "{{ was_charging and not is_charging }}"
+      - condition: state
+        entity_id: number.battery_maximum_discharging_power
+        state: '0'
+      sequence:
+      - action: number.set_value
+        target:
+          entity_id: number.battery_maximum_discharging_power
+        data:
+          value: '{{ states(''input_number.battery_discharge_power_before_ev_charging'') | float(2000) }}'
+  mode: single

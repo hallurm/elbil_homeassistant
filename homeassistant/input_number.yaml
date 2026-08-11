@@ -1,0 +1,48 @@
+# Elbil input_number helpers — udtrukket fra configuration.yaml
+# Se elbilsensorer.md for hvordan de bruges (batteri-automatisering og
+# manuel indtastning af ekstern opladning).
+
+input_number:
+  battery_discharge_power_before_ev_charging:
+    name: "Batteri max afladningseffekt før elbil oplader"
+    min: 0
+    max: 15000
+    step: 1
+    unit_of_measurement: "W"
+    icon: mdi:battery-arrow-down
+
+  elbil_ekstern_kwh_indtastning:
+    name: "Elbil ekstern opladning - kWh (indtast her)"
+    min: 0
+    max: 200
+    step: 0.01
+    unit_of_measurement: "kWh"
+    icon: mdi:ev-station
+    mode: box
+
+  elbil_ekstern_pris_indtastning:
+    name: "Elbil ekstern opladning - pris (indtast her)"
+    min: 0
+    max: 5000
+    step: 0.01
+    unit_of_measurement: "DKK"
+    icon: mdi:cash-plus
+    mode: box
+
+  elbil_ekstern_kwh_total:
+    name: "Elbil ekstern opladning kWh (samlet)"
+    min: 0
+    max: 100000
+    step: 0.01
+    unit_of_measurement: "kWh"
+    icon: mdi:ev-station
+    mode: box
+
+  elbil_ekstern_pris_total:
+    name: "Elbil ekstern opladning pris (samlet)"
+    min: 0
+    max: 1000000
+    step: 0.01
+    unit_of_measurement: "DKK"
+    icon: mdi:cash-multiple
+    mode: box
