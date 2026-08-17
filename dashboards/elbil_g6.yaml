@@ -23,6 +23,12 @@ views:
     entity: sensor.fsp_ne_312821708_output_power
   - type: entity
     entity: sensor.elbil_oplader_solandel
+  - type: entity
+    entity: sensor.power_meter_phase_a_current
+  - type: entity
+    entity: sensor.power_meter_phase_b_current
+  - type: entity
+    entity: sensor.power_meter_phase_c_current
   sections:
   - type: grid
     cards:
@@ -268,6 +274,13 @@ views:
         statistics:
           type: change
           period: day
+      - entity: sensor.elbil_ekstern_opladning_kwh_total
+        name: Ekstern
+        type: column
+        color: '#22c55e'
+        statistics:
+          type: change
+          period: day
 - type: sections
   theme: Frosted Glass
   max_columns: 4
@@ -331,6 +344,13 @@ views:
         name: Fra sol
         type: column
         color: '#f59e0b'
+        statistics:
+          type: change
+          period: day
+      - entity: sensor.elbil_ekstern_opladning_kwh_total
+        name: Ekstern
+        type: column
+        color: '#22c55e'
         statistics:
           type: change
           period: day
