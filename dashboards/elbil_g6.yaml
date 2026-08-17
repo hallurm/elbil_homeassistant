@@ -274,12 +274,12 @@ views:
         statistics:
           type: change
           period: day
-      - entity: sensor.elbil_ekstern_opladning_kwh_total
+      - entity: sensor.elbil_ekstern_opladning_kwh_i_dag
         name: Ekstern
         type: column
         color: '#22c55e'
         statistics:
-          type: change
+          type: state
           period: day
 - type: sections
   theme: Frosted Glass
@@ -347,12 +347,12 @@ views:
         statistics:
           type: change
           period: day
-      - entity: sensor.elbil_ekstern_opladning_kwh_total
+      - entity: sensor.elbil_ekstern_opladning_kwh_i_dag
         name: Ekstern
         type: column
         color: '#22c55e'
         statistics:
-          type: change
+          type: state
           period: day
 - type: sections
   theme: Frosted Glass
@@ -419,6 +419,13 @@ views:
         color: '#f59e0b'
         statistics:
           type: change
+          period: month
+      - entity: sensor.elbil_ekstern_opladning_kwh_denne_maned
+        name: Ekstern
+        type: column
+        color: '#22c55e'
+        statistics:
+          type: state
           period: month
 - type: sections
   theme: Frosted Glass
