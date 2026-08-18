@@ -267,6 +267,8 @@ views:
         statistics:
           type: change
           period: day
+        show:
+          legend_value: false
       - entity: sensor.elbil_oplader_energi_fra_sol
         name: Fra sol
         type: column
@@ -274,6 +276,8 @@ views:
         statistics:
           type: change
           period: day
+        show:
+          legend_value: false
       - entity: sensor.elbil_ekstern_opladning_kwh_i_dag
         name: Ekstern
         type: column
@@ -281,6 +285,8 @@ views:
         statistics:
           type: state
           period: day
+        show:
+          legend_value: false
 - type: sections
   theme: Frosted Glass
   max_columns: 4
@@ -340,6 +346,8 @@ views:
         statistics:
           type: change
           period: day
+        show:
+          legend_value: false
       - entity: sensor.elbil_oplader_energi_fra_sol
         name: Fra sol
         type: column
@@ -347,6 +355,8 @@ views:
         statistics:
           type: change
           period: day
+        show:
+          legend_value: false
       - entity: sensor.elbil_ekstern_opladning_kwh_i_dag
         name: Ekstern
         type: column
@@ -354,6 +364,8 @@ views:
         statistics:
           type: state
           period: day
+        show:
+          legend_value: false
 - type: sections
   theme: Frosted Glass
   max_columns: 4
@@ -413,6 +425,8 @@ views:
         statistics:
           type: change
           period: month
+        show:
+          legend_value: false
       - entity: sensor.elbil_oplader_energi_fra_sol
         name: Fra sol
         type: column
@@ -420,6 +434,8 @@ views:
         statistics:
           type: change
           period: month
+        show:
+          legend_value: false
       - entity: sensor.elbil_ekstern_opladning_kwh_denne_maned
         name: Ekstern
         type: column
@@ -427,6 +443,8 @@ views:
         statistics:
           type: state
           period: month
+        show:
+          legend_value: false
 - type: sections
   theme: Frosted Glass
   max_columns: 4
