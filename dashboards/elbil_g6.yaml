@@ -324,7 +324,7 @@ views:
   - type: grid
     cards:
     - type: heading
-      heading: Historik - denne måned
+      heading: Historik - seneste 31 dage
     - type: custom:apexcharts-card
       header:
         show: true
@@ -332,7 +332,7 @@ views:
         show_states: false
       graph_span: 31d
       span:
-        start: month
+        end: day
       apex_config:
         chart:
           stacked: true
