@@ -287,6 +287,40 @@ views:
           period: day
         show:
           legend_value: false
+    - type: custom:apexcharts-card
+      header:
+        show: true
+        title: DKK pr. dag (hjemme + ekstern)
+        show_states: false
+      graph_span: 7d
+      span:
+        end: day
+      apex_config:
+        chart:
+          stacked: true
+        legend:
+          show: true
+      series:
+      - entity: sensor.elbil_oplader_pris_akkumuleret
+        name: Hjemme
+        type: column
+        color: '#3b82f6'
+        unit: ' DKK'
+        statistics:
+          type: change
+          period: day
+        show:
+          legend_value: false
+      - entity: sensor.elbil_ekstern_opladning_pris_i_dag
+        name: Ekstern
+        type: column
+        color: '#22c55e'
+        unit: ' DKK'
+        statistics:
+          type: state
+          period: day
+        show:
+          legend_value: false
 - type: sections
   theme: Frosted Glass
   max_columns: 4
@@ -366,6 +400,40 @@ views:
           period: day
         show:
           legend_value: false
+    - type: custom:apexcharts-card
+      header:
+        show: true
+        title: DKK pr. dag (hjemme + ekstern)
+        show_states: false
+      graph_span: 31d
+      span:
+        end: day
+      apex_config:
+        chart:
+          stacked: true
+        legend:
+          show: true
+      series:
+      - entity: sensor.elbil_oplader_pris_akkumuleret
+        name: Hjemme
+        type: column
+        color: '#3b82f6'
+        unit: ' DKK'
+        statistics:
+          type: change
+          period: day
+        show:
+          legend_value: false
+      - entity: sensor.elbil_ekstern_opladning_pris_i_dag
+        name: Ekstern
+        type: column
+        color: '#22c55e'
+        unit: ' DKK'
+        statistics:
+          type: state
+          period: day
+        show:
+          legend_value: false
 - type: sections
   theme: Frosted Glass
   max_columns: 4
@@ -440,6 +508,40 @@ views:
         name: Ekstern
         type: column
         color: '#22c55e'
+        statistics:
+          type: state
+          period: month
+        show:
+          legend_value: false
+    - type: custom:apexcharts-card
+      header:
+        show: true
+        title: DKK pr. måned (hjemme + ekstern)
+        show_states: false
+      graph_span: 366d
+      span:
+        start: year
+      apex_config:
+        chart:
+          stacked: true
+        legend:
+          show: true
+      series:
+      - entity: sensor.elbil_oplader_pris_akkumuleret
+        name: Hjemme
+        type: column
+        color: '#3b82f6'
+        unit: ' DKK'
+        statistics:
+          type: change
+          period: month
+        show:
+          legend_value: false
+      - entity: sensor.elbil_ekstern_opladning_pris_denne_maned
+        name: Ekstern
+        type: column
+        color: '#22c55e'
+        unit: ' DKK'
         statistics:
           type: state
           period: month
