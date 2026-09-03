@@ -259,6 +259,23 @@ views:
           stacked: true
         legend:
           show: true
+        tooltip:
+          custom: |-
+            EVAL:function({ series, seriesIndex, dataPointIndex, w }) {
+              const ts = w.globals.seriesX[seriesIndex][dataPointIndex];
+              const d = new Date(ts);
+              const dateStr = d.toLocaleDateString('da-DK', { day: 'numeric', month: 'short', year: 'numeric' });
+              let rows = '';
+              w.globals.seriesX.forEach((xs, i) => {
+                const idx = xs.indexOf(ts);
+                if (idx === -1) return;
+                const val = series[i][idx];
+                const name = w.globals.seriesNames[i];
+                const color = w.globals.colors[i];
+                rows += '<div style="display:flex;align-items:center;gap:6px;padding:2px 10px;"><span style="width:10px;height:10px;border-radius:50%;background:' + color + ';display:inline-block;"></span><span>' + name + ': <b>' + val.toFixed(1) + ' kWh</b></span></div>';
+              });
+              return '<div style="padding:6px 0;"><div style="padding:2px 10px;font-weight:600;border-bottom:1px solid rgba(255,255,255,.15);margin-bottom:2px;">' + dateStr + '</div>' + rows + '</div>';
+            }
       series:
       - entity: sensor.elbil_oplader_energi_fra_nettet
         name: Fra nettet
@@ -300,6 +317,23 @@ views:
           stacked: true
         legend:
           show: true
+        tooltip:
+          custom: |-
+            EVAL:function({ series, seriesIndex, dataPointIndex, w }) {
+              const ts = w.globals.seriesX[seriesIndex][dataPointIndex];
+              const d = new Date(ts);
+              const dateStr = d.toLocaleDateString('da-DK', { day: 'numeric', month: 'short', year: 'numeric' });
+              let rows = '';
+              w.globals.seriesX.forEach((xs, i) => {
+                const idx = xs.indexOf(ts);
+                if (idx === -1) return;
+                const val = series[i][idx];
+                const name = w.globals.seriesNames[i];
+                const color = w.globals.colors[i];
+                rows += '<div style="display:flex;align-items:center;gap:6px;padding:2px 10px;"><span style="width:10px;height:10px;border-radius:50%;background:' + color + ';display:inline-block;"></span><span>' + name + ': <b>' + val.toFixed(1) + ' DKK</b></span></div>';
+              });
+              return '<div style="padding:6px 0;"><div style="padding:2px 10px;font-weight:600;border-bottom:1px solid rgba(255,255,255,.15);margin-bottom:2px;">' + dateStr + '</div>' + rows + '</div>';
+            }
       series:
       - entity: sensor.elbil_oplader_pris_akkumuleret
         name: Hjemme
@@ -372,6 +406,23 @@ views:
           stacked: true
         legend:
           show: true
+        tooltip:
+          custom: |-
+            EVAL:function({ series, seriesIndex, dataPointIndex, w }) {
+              const ts = w.globals.seriesX[seriesIndex][dataPointIndex];
+              const d = new Date(ts);
+              const dateStr = d.toLocaleDateString('da-DK', { day: 'numeric', month: 'short', year: 'numeric' });
+              let rows = '';
+              w.globals.seriesX.forEach((xs, i) => {
+                const idx = xs.indexOf(ts);
+                if (idx === -1) return;
+                const val = series[i][idx];
+                const name = w.globals.seriesNames[i];
+                const color = w.globals.colors[i];
+                rows += '<div style="display:flex;align-items:center;gap:6px;padding:2px 10px;"><span style="width:10px;height:10px;border-radius:50%;background:' + color + ';display:inline-block;"></span><span>' + name + ': <b>' + val.toFixed(1) + ' kWh</b></span></div>';
+              });
+              return '<div style="padding:6px 0;"><div style="padding:2px 10px;font-weight:600;border-bottom:1px solid rgba(255,255,255,.15);margin-bottom:2px;">' + dateStr + '</div>' + rows + '</div>';
+            }
       series:
       - entity: sensor.elbil_oplader_energi_fra_nettet
         name: Fra nettet
@@ -413,6 +464,23 @@ views:
           stacked: true
         legend:
           show: true
+        tooltip:
+          custom: |-
+            EVAL:function({ series, seriesIndex, dataPointIndex, w }) {
+              const ts = w.globals.seriesX[seriesIndex][dataPointIndex];
+              const d = new Date(ts);
+              const dateStr = d.toLocaleDateString('da-DK', { day: 'numeric', month: 'short', year: 'numeric' });
+              let rows = '';
+              w.globals.seriesX.forEach((xs, i) => {
+                const idx = xs.indexOf(ts);
+                if (idx === -1) return;
+                const val = series[i][idx];
+                const name = w.globals.seriesNames[i];
+                const color = w.globals.colors[i];
+                rows += '<div style="display:flex;align-items:center;gap:6px;padding:2px 10px;"><span style="width:10px;height:10px;border-radius:50%;background:' + color + ';display:inline-block;"></span><span>' + name + ': <b>' + val.toFixed(1) + ' DKK</b></span></div>';
+              });
+              return '<div style="padding:6px 0;"><div style="padding:2px 10px;font-weight:600;border-bottom:1px solid rgba(255,255,255,.15);margin-bottom:2px;">' + dateStr + '</div>' + rows + '</div>';
+            }
       series:
       - entity: sensor.elbil_oplader_pris_akkumuleret
         name: Hjemme
@@ -485,6 +553,23 @@ views:
           stacked: true
         legend:
           show: true
+        tooltip:
+          custom: |-
+            EVAL:function({ series, seriesIndex, dataPointIndex, w }) {
+              const ts = w.globals.seriesX[seriesIndex][dataPointIndex];
+              const d = new Date(ts);
+              const dateStr = d.toLocaleDateString('da-DK', { month: 'long', year: 'numeric' });
+              let rows = '';
+              w.globals.seriesX.forEach((xs, i) => {
+                const idx = xs.indexOf(ts);
+                if (idx === -1) return;
+                const val = series[i][idx];
+                const name = w.globals.seriesNames[i];
+                const color = w.globals.colors[i];
+                rows += '<div style="display:flex;align-items:center;gap:6px;padding:2px 10px;"><span style="width:10px;height:10px;border-radius:50%;background:' + color + ';display:inline-block;"></span><span>' + name + ': <b>' + val.toFixed(1) + ' kWh</b></span></div>';
+              });
+              return '<div style="padding:6px 0;"><div style="padding:2px 10px;font-weight:600;border-bottom:1px solid rgba(255,255,255,.15);margin-bottom:2px;">' + dateStr + '</div>' + rows + '</div>';
+            }
       series:
       - entity: sensor.elbil_oplader_energi_fra_nettet
         name: Fra nettet
@@ -526,6 +611,23 @@ views:
           stacked: true
         legend:
           show: true
+        tooltip:
+          custom: |-
+            EVAL:function({ series, seriesIndex, dataPointIndex, w }) {
+              const ts = w.globals.seriesX[seriesIndex][dataPointIndex];
+              const d = new Date(ts);
+              const dateStr = d.toLocaleDateString('da-DK', { month: 'long', year: 'numeric' });
+              let rows = '';
+              w.globals.seriesX.forEach((xs, i) => {
+                const idx = xs.indexOf(ts);
+                if (idx === -1) return;
+                const val = series[i][idx];
+                const name = w.globals.seriesNames[i];
+                const color = w.globals.colors[i];
+                rows += '<div style="display:flex;align-items:center;gap:6px;padding:2px 10px;"><span style="width:10px;height:10px;border-radius:50%;background:' + color + ';display:inline-block;"></span><span>' + name + ': <b>' + val.toFixed(1) + ' DKK</b></span></div>';
+              });
+              return '<div style="padding:6px 0;"><div style="padding:2px 10px;font-weight:600;border-bottom:1px solid rgba(255,255,255,.15);margin-bottom:2px;">' + dateStr + '</div>' + rows + '</div>';
+            }
       series:
       - entity: sensor.elbil_oplader_pris_akkumuleret
         name: Hjemme
