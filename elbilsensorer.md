@@ -174,3 +174,33 @@ input_number (indtastning) ──[script]──► ekstern total (kWh/DKK) ─�
 
 hjemme-periodetællere + ekstern-periodetællere ──► kombinerede total-sensorer (hjemme + ekstern)
 ```
+
+---
+
+## 7. Bil service — hvornår skal bilen til service?
+
+*(Ligger i `homeassistant/bil_service.yaml`, som på serveren er en HA-"package" i `/config/packages/`. Ikke en del af opladnings-beregningerne, men bruger bilens kilometertæller `sensor.xpeng_g6_kilometertaeller` og bor i samme repo/dashboard.)*
+
+Bilen skal til service ved **20.000 km eller 12 måneder efter sidste service — hvad der kommer først.** Begge grænser kan ændres i hjælperne.
+
+### Hjælpere
+| Entity | Betydning | Startværdi |
+|---|---|---|
+| `input_datetime.bil_service_sidst` | Dato for sidste service | 2026-07-28 (bilen leveret) |
+| `input_number.bil_service_km_ved_sidste` | Kilometerstand ved sidste service | 0 km |
+| `input_number.bil_service_interval_km` | Kilometer-interval | 20.000 |
+| `input_number.bil_service_interval_maaneder` | Tids-interval | 12 |
+
+Hjælperne har bevidst ingen `initial`, så en genstart af HA ikke nulstiller dem.
+
+### Sensorer
+- **`sensor.bil_service_km_siden_service`** = kilometertæller − km ved sidste service.
+- **`sensor.bil_service_km_til_service`** = kilometer-interval − km siden service.
+- **`sensor.bil_service_km_pr_dag`** — gennemsnitlig kørsel, som følger hvor meget bilen faktisk bruges. Den bruger **det rullende 30-dages snit** (to `statistics`-sensorer: kørte km de seneste 30 dage og tidspunktet for ældste måling i vinduet) når der er mindst 14 dages måledata. Ellers bruges **snittet siden sidste service** (km siden service ÷ dage siden service). Attributten `metode` viser hvilken. Kilometertælleren findes i HA's historik fra 6. oktober 2026, så det rullende snit overtager først omkring 20. oktober.
+- **`sensor.bil_service_dato_pga_tid`** = dato for sidste service + antal måneder (med korrekt håndtering af månedslængde og skudår).
+- **`sensor.bil_service_dato_pga_km`** = i dag + (km til service ÷ km pr. dag). Utilgængelig hvis kørslen er under ca. 0,5 km/dag.
+- **`sensor.bil_naeste_service`** — **svaret:** den tidligste af de to datoer. Attributten `aarsag` viser om det er `km` eller `tid (12 mdr)`, der afgør det.
+- **`sensor.bil_dage_til_service`** — antal dage til den dato.
+
+### Nulstilling
+`script.bil_service_udfoert` ("Bil: service udført") sætter `bil_service_km_ved_sidste` til bilens aktuelle kilometertæller og `bil_service_sidst` til dags dato. Den kaldes fra knappen "Service udført" på dashboardets "Bil stats"-fane (med bekræftelsesdialog). Var servicen en anden dag eller ved en anden km-stand, kan de to hjælpere rettes bagefter.

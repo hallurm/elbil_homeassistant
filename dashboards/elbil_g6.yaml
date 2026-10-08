@@ -6,12 +6,168 @@
 # dashboards gemmes internt i .storage/lovelace.dashboard_g6 som JSON,
 # redigeret via UI'et) — det er en dokumentations-/backup-kopi.
 #
-# Fem faner: I dag / Uge / Måned / År / Total. Bruger mushroom-cards til
+# Seks faner: Bil stats / I dag / Uge / Måned / År / Total. Bruger mushroom-cards til
 # øjebliks-/periodetal og apexcharts-card til søjlediagrammer og
 # elpris-grafen. Se elbilsensorer.md for hvad de bagvedliggende sensorer
 # betyder (dashboard-opbygningen i sig selv er ikke dokumenteret der).
+#
+# Bemærk: fanen "Bil stats" er på serveren begrænset til bestemte brugere
+# (view-nøglen "visible" med HA-bruger-id'er) — den er udeladt her, da det er
+# personlige id'er i et offentligt repo.
 
 views:
+- type: sections
+  theme: Frosted Glass
+  max_columns: 3
+  title: Bil stats
+  path: bil-stats
+  sections:
+  - type: grid
+    cards:
+    - type: tile
+      entity: sensor.xpeng_g6_kilometertaeller
+      name:
+        type: entity
+      vertical: false
+      features_position: bottom
+      grid_options:
+        columns: full
+        rows: 1
+    - type: tile
+      grid_options:
+        columns: full
+      entity: sensor.xpeng_g6_raekkevidde_beregnet
+      name:
+        type: entity
+      vertical: false
+      features_position: bottom
+  - type: grid
+    cards:
+    - type: tile
+      entity: sensor.xpeng_g6_soc
+      name:
+        type: entity
+      icon: mdi:battery-charging
+      vertical: false
+      features_position: bottom
+    - type: tile
+      entity: sensor.xpeng_g6_12_v_batteri
+      name:
+        type: entity
+      icon: mdi:car-battery
+      vertical: false
+      features_position: bottom
+    - type: tile
+      entity: sensor.xpeng_g6_motor_kolevaeske
+      name:
+        type: entity
+      vertical: false
+      features_position: bottom
+    - type: tile
+      entity: sensor.xpeng_g6_batteri_kolevaeske
+      name:
+        type: entity
+      vertical: false
+      features_position: bottom
+  - type: grid
+    cards:
+    - type: tile
+      entity: sensor.xpeng_g6_forbrug_siden_start
+      name:
+        type: entity
+      icon: mdi:car
+      vertical: false
+      features_position: bottom
+    - type: tile
+      entity: sensor.xpeng_g6_forbrug_25_km
+      name:
+        type: entity
+      icon: mdi:car
+      vertical: false
+      features_position: bottom
+    - type: tile
+      entity: sensor.xpeng_g6_forbrug_100_km
+      name:
+        type: entity
+      icon: mdi:car
+      vertical: false
+      features_position: bottom
+    - type: tile
+      entity: sensor.xpeng_g6_forbrug_1000_km
+      name:
+        type: entity
+      icon: mdi:car
+      vertical: false
+      features_position: bottom
+  - type: grid
+    cards:
+    - type: heading
+      heading: Service
+      icon: mdi:car-wrench
+    - type: tile
+      entity: sensor.bil_naeste_service
+      name: Næste service
+      vertical: false
+      features_position: bottom
+      state_content:
+      - state
+      - aarsag
+      grid_options:
+        columns: full
+        rows: 1
+    - type: tile
+      entity: sensor.bil_dage_til_service
+      name: Dage til service
+      vertical: false
+      features_position: bottom
+    - type: tile
+      entity: sensor.bil_service_km_til_service
+      name: Km til service
+      vertical: false
+      features_position: bottom
+    - type: tile
+      entity: sensor.bil_service_km_pr_dag
+      name: Kørsel pr. dag
+      vertical: false
+      features_position: bottom
+      icon: mdi:speedometer
+      state_content:
+      - state
+      - metode
+    - type: tile
+      entity: sensor.bil_service_km_siden_service
+      name: Km siden service
+      vertical: false
+      features_position: bottom
+    - type: entities
+      show_header_toggle: false
+      entities:
+      - entity: input_datetime.bil_service_sidst
+        name: Sidste service (dato)
+      - entity: input_number.bil_service_km_ved_sidste
+        name: Km ved sidste service
+      - entity: input_number.bil_service_interval_km
+        name: Interval (km)
+      - entity: input_number.bil_service_interval_maaneder
+        name: Interval (måneder)
+    - type: tile
+      entity: script.bil_service_udfoert
+      name: Service udført
+      vertical: false
+      features_position: bottom
+      icon: mdi:wrench-check
+      icon_color: green
+      tap_action:
+        action: perform-action
+        perform_action: script.turn_on
+        target:
+          entity_id: script.bil_service_udfoert
+        confirmation:
+          text: Registrér at bilen har været til service nu? Det nulstiller servicetælleren.
+      grid_options:
+        columns: full
+        rows: 1
+  cards: []
 - type: sections
   theme: Frosted Glass
   max_columns: 3
@@ -19,6 +175,8 @@ views:
   badges:
   - type: entity
     entity: sensor.fsp_ne_312821708_status
+  - type: entity
+    entity: sensor.xpeng_g6_soc
   - type: entity
     entity: sensor.fsp_ne_312821708_output_power
   - type: entity
@@ -156,17 +314,14 @@ views:
     - type: heading
       heading: Elpriser – bedste ladetidspunkter
     - type: custom:mushroom-template-card
-      primary: |-
-        {% set ns = namespace(f=[]) %}{% set data = (state_attr('sensor.el_kob_pris','raw_today') or []) + (state_attr('sensor.el_kob_pris','raw_tomorrow') or []) %}{% set cur = now().replace(minute=0, second=0, microsecond=0) %}{% for i in data %}{% if as_datetime(i.hour) >= cur %}{% set ns.f = ns.f + [i] %}{% endif %}{% endfor %}{% if ns.f | length > 0 %}{% set b = (ns.f | sort(attribute='price'))[0] %}{{ as_timestamp(b.hour) | timestamp_custom('%H:%M', true) }} – {{ b.price | round(2) }} kr/kWh{% else %}Ingen prisdata{% endif %}
-      secondary: |-
-        {% set ns = namespace(f=[]) %}{% set data = (state_attr('sensor.el_kob_pris','raw_today') or []) + (state_attr('sensor.el_kob_pris','raw_tomorrow') or []) %}{% set cur = now().replace(minute=0, second=0, microsecond=0) %}{% for i in data %}{% if as_datetime(i.hour) >= cur %}{% set ns.f = ns.f + [i] %}{% endif %}{% endfor %}{% if ns.f | length > 0 %}{% set b = (ns.f | sort(attribute='price'))[0] %}{% set secs = (as_timestamp(b.hour) - as_timestamp(now())) | int %}{% if secs <= 0 %}Lige nu – lad nu!{% else %}{% set h = (secs // 3600) | int %}{% set m = ((secs % 3600) // 60) | int %}Starter om {% if h > 0 %}{{ h }} t {% endif %}{{ m }} min{% endif %}{% else %}–{% endif %}
+      primary: '{% set ns = namespace(f=[]) %}{% set data = (state_attr(''sensor.el_kob_pris'',''raw_today'') or []) + (state_attr(''sensor.el_kob_pris'',''raw_tomorrow'') or []) %}{% set cur = now().replace(minute=0, second=0, microsecond=0) %}{% for i in data %}{% if as_datetime(i.hour) >= cur %}{% set ns.f = ns.f + [i] %}{% endif %}{% endfor %}{% if ns.f | length > 0 %}{% set b = (ns.f | sort(attribute=''price''))[0] %}{{ as_timestamp(b.hour) | timestamp_custom(''%H:%M'', true) }} – {{ b.price | round(2) }} kr/kWh{% else %}Ingen prisdata{% endif %}'
+      secondary: '{% set ns = namespace(f=[]) %}{% set data = (state_attr(''sensor.el_kob_pris'',''raw_today'') or []) + (state_attr(''sensor.el_kob_pris'',''raw_tomorrow'') or []) %}{% set cur = now().replace(minute=0, second=0, microsecond=0) %}{% for i in data %}{% if as_datetime(i.hour) >= cur %}{% set ns.f = ns.f + [i] %}{% endif %}{% endfor %}{% if ns.f | length > 0 %}{% set b = (ns.f | sort(attribute=''price''))[0] %}{% set secs = (as_timestamp(b.hour) - as_timestamp(now())) | int %}{% if secs <= 0 %}Lige nu – lad nu!{% else %}{% set h = (secs // 3600) | int %}{% set m = ((secs % 3600) // 60) | int %}Starter om {% if h > 0 %}{{ h }} t {% endif %}{{ m }} min{% endif %}{% else %}–{% endif %}'
       icon: mdi:cash-clock
       icon_color: green
       multiline_secondary: true
     - type: custom:mushroom-template-card
       primary: Billigste ladevindue
-      secondary: |-
-        {% set ns = namespace(f=[]) %}{% set data = (state_attr('sensor.el_kob_pris','raw_today') or []) + (state_attr('sensor.el_kob_pris','raw_tomorrow') or []) %}{% set cur = now().replace(minute=0, second=0, microsecond=0) %}{% for i in data %}{% if as_datetime(i.hour) >= cur %}{% set ns.f = ns.f + [i] %}{% endif %}{% endfor %}{% if ns.f | length > 0 %}{% set pr = ns.f | map(attribute='price') | list %}{% set mn = pr | min %}{% set thr = [mn * 1.3, mn + 0.20] | max %}{% set mi = namespace(idx=-1) %}{% for x in pr %}{% if mi.idx == -1 and x == mn %}{% set mi.idx = loop.index0 %}{% endif %}{% endfor %}{% set L = namespace(i=mi.idx, stop=false) %}{% for k in range(mi.idx - 1, -1, -1) %}{% if not L.stop %}{% if pr[k] <= thr %}{% set L.i = k %}{% else %}{% set L.stop = true %}{% endif %}{% endif %}{% endfor %}{% set R = namespace(i=mi.idx, stop=false) %}{% for k in range(mi.idx + 1, pr | length) %}{% if not R.stop %}{% if pr[k] <= thr %}{% set R.i = k %}{% else %}{% set R.stop = true %}{% endif %}{% endif %}{% endfor %}{% set win = ns.f[L.i:R.i + 1] %}{% set avg = (win | map(attribute='price') | sum) / (win | length) %}{{ as_timestamp(win[0].hour) | timestamp_custom('%H:%M', true) }}–{{ (as_timestamp(win[-1].hour) + 3600) | timestamp_custom('%H:%M', true) }} · {{ win | length }} timer · snit {{ avg | round(2) }} kr/kWh{% else %}Ingen prisdata{% endif %}
+      secondary: '{% set ns = namespace(f=[]) %}{% set data = (state_attr(''sensor.el_kob_pris'',''raw_today'') or []) + (state_attr(''sensor.el_kob_pris'',''raw_tomorrow'') or []) %}{% set cur = now().replace(minute=0, second=0, microsecond=0) %}{% for i in data %}{% if as_datetime(i.hour) >= cur %}{% set ns.f = ns.f + [i] %}{% endif %}{% endfor %}{% if ns.f | length > 0 %}{% set pr = ns.f | map(attribute=''price'') | list %}{% set mn = pr | min %}{% set thr = [mn * 1.3, mn + 0.20] | max %}{% set mi = namespace(idx=-1) %}{% for x in pr %}{% if mi.idx == -1 and x == mn %}{% set mi.idx = loop.index0 %}{% endif %}{% endfor %}{% set L = namespace(i=mi.idx, stop=false) %}{% for k in range(mi.idx - 1, -1, -1) %}{% if not L.stop %}{% if pr[k] <= thr %}{% set L.i = k %}{% else %}{% set L.stop = true %}{% endif %}{% endif %}{% endfor %}{% set R = namespace(i=mi.idx, stop=false) %}{% for k in range(mi.idx + 1, pr | length) %}{% if not R.stop %}{% if pr[k] <= thr %}{% set R.i = k %}{% else %}{% set R.stop = true %}{% endif %}{% endif %}{% endfor %}{% set win = ns.f[L.i:R.i + 1] %}{% set avg = (win | map(attribute=''price'') | sum) / (win | length) %}{{ as_timestamp(win[0].hour) | timestamp_custom(''%H:%M'', true) }}–{{ (as_timestamp(win[-1].hour) + 3600) | timestamp_custom(''%H:%M'', true) }} · {{ win | length }} timer · snit {{ avg | round(2) }} kr/kWh{% else %}Ingen prisdata{% endif %}'
       icon: mdi:ev-station
       icon_color: teal
       multiline_secondary: true
@@ -210,7 +365,7 @@ views:
           color: '#ef4444'
 - type: sections
   theme: Frosted Glass
-  max_columns: 4
+  max_columns: 3
   title: Uge
   path: denne-uge
   sections:
@@ -355,6 +510,7 @@ views:
           period: day
         show:
           legend_value: false
+  cards: []
 - type: sections
   theme: Frosted Glass
   max_columns: 4
@@ -504,7 +660,7 @@ views:
           legend_value: false
 - type: sections
   theme: Frosted Glass
-  max_columns: 4
+  max_columns: 2
   title: År
   path: ar
   sections:
@@ -649,6 +805,8 @@ views:
           period: month
         show:
           legend_value: false
+  cards: []
+  top_margin: false
 - type: sections
   theme: Frosted Glass
   max_columns: 4

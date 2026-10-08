@@ -43,10 +43,14 @@ raw hardware sensors (phase currents/voltages, grid meter, inverter)
 
 Public-charger sessions can't be measured automatically, so `homeassistant/input_number.yaml` defines manual entry fields plus a running total, and `homeassistant/scripts.yaml`'s single script folds an entry into the total and resets the input fields. The `_total_*_alt` sensors at the bottom of `sensors.yaml` add home + external together *without* feeding external kWh into the solar-share percentage, since external charging has no known solar fraction by definition.
 
+### Bil service (separate from charging)
+
+`homeassistant/bil_service.yaml` is a self-contained Home Assistant **package** (on the server: `/config/packages/bil_service.yaml`, loaded via `homeassistant: packages: !include_dir_named packages` in `configuration.yaml`). It computes the next car-service date (20,000 km or 12 months, whichever first) from the car's odometer, with a reset script. Unlike the other files here it is a 1:1 copy of the live file. Template sensors there must not use `suggested_display_precision` (invalid for `template:` in this HA version). Documented in `elbilsensorer.md` section 7.
+
 ### Two dashboards, two different mechanisms
 
 - `dashboards/elbil.yaml` — a plain YAML-mode Lovelace dashboard (one page, everything on it). This format is directly includable by Home Assistant as-is.
-- `dashboards/elbil_g6.yaml` — a five-tab "sections" dashboard using Mushroom cards and ApexCharts. On the live server this lives in `.storage/lovelace.dashboard_g6` as **JSON** (storage-mode dashboards are UI-managed); the copy here was converted to YAML purely for readability/diffing. It is not something Home Assistant can load from this file directly.
+- `dashboards/elbil_g6.yaml` — a six-tab "sections" dashboard (Bil stats / I dag / Uge / Måned / År / Total) using Mushroom cards and ApexCharts. On the live server this lives in `.storage/lovelace.dashboard_g6` as **JSON** (storage-mode dashboards are UI-managed); the copy here was converted to YAML purely for readability/diffing. The "Bil stats" view's `visible:` user-id list is deliberately omitted from the copy (personal ids, public repo). The dashboard is also edited by hand in the UI, so re-diff the live JSON against this file before assuming it is in sync. It is not something Home Assistant can load from this file directly.
 
 ### Entity IDs are derived from `name:`, not from `unique_id`
 

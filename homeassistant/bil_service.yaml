@@ -1,0 +1,210 @@
+# Bil service — hvornår skal bilen (XPeng G6) til næste service?
+#
+# Dette er en Home Assistant "package" og ligger på serveren som
+# /config/packages/bil_service.yaml (indlæses via
+#   homeassistant:
+#     packages: !include_dir_named packages
+# i configuration.yaml). Her i repoet er det en én-til-én kopi.
+#
+# Service skal ske ved 20.000 km ELLER 12 måneder efter sidste service,
+# hvad der kommer først. Begge grænser kan ændres via hjælperne herunder.
+#
+# Kilde: sensor.xpeng_g6_kilometertaeller (bilens kilometertæller, km).
+# Beskrivelse af formlerne: se elbilsensorer.md, afsnit "Bil service".
+#
+# Første gang pakken indlæses skal hjælperne have deres startværdier
+# (de har bevidst ingen "initial", så en genstart ikke nulstiller dem):
+#   input_datetime.bil_service_sidst           = 2026-07-28
+#   input_number.bil_service_km_ved_sidste     = 0
+#   input_number.bil_service_interval_km       = 20000
+#   input_number.bil_service_interval_maaneder = 12
+
+input_datetime:
+  bil_service_sidst:
+    name: "Bil service sidst udført"
+    has_date: true
+    has_time: false
+    icon: mdi:car-wrench
+
+input_number:
+  bil_service_km_ved_sidste:
+    name: "Bil service - km ved sidste service"
+    min: 0
+    max: 1000000
+    step: 1
+    unit_of_measurement: "km"
+    icon: mdi:counter
+    mode: box
+
+  bil_service_interval_km:
+    name: "Bil service - interval (km)"
+    min: 1000
+    max: 100000
+    step: 500
+    unit_of_measurement: "km"
+    icon: mdi:map-marker-distance
+    mode: box
+
+  bil_service_interval_maaneder:
+    name: "Bil service - interval (måneder)"
+    min: 1
+    max: 60
+    step: 1
+    unit_of_measurement: "mdr"
+    icon: mdi:calendar-clock
+    mode: box
+
+sensor:
+  # Kørte km de seneste 30 dage (rullende vindue, følger hvor meget bilen køres)
+  - platform: statistics
+    name: bil_service_km_seneste_30_dage
+    unique_id: bil_service_km_seneste_30_dage
+    entity_id: sensor.xpeng_g6_kilometertaeller
+    state_characteristic: change
+    max_age:
+      days: 30
+    sampling_size: 50000
+    precision: 0
+
+  # Tidspunkt for ældste kilometer-måling i det vindue (viser hvor meget
+  # historik der er — bruges til at afgøre om det rullende snit er pålideligt)
+  - platform: statistics
+    name: bil_service_aeldste_maaling
+    unique_id: bil_service_aeldste_maaling
+    entity_id: sensor.xpeng_g6_kilometertaeller
+    state_characteristic: datetime_oldest
+    max_age:
+      days: 30
+    sampling_size: 50000
+
+template:
+  - sensor:
+      - name: "Bil service km siden service"
+        unique_id: bil_service_km_siden_service
+        unit_of_measurement: "km"
+        device_class: distance
+        state_class: measurement
+        availability: "{{ states('sensor.xpeng_g6_kilometertaeller') | is_number }}"
+        state: >-
+          {{ ([states('sensor.xpeng_g6_kilometertaeller') | float(0)
+               - states('input_number.bil_service_km_ved_sidste') | float(0), 0] | max) | round(0) }}
+
+      - name: "Bil service km til service"
+        unique_id: bil_service_km_til_service
+        unit_of_measurement: "km"
+        device_class: distance
+        state_class: measurement
+        availability: "{{ states('sensor.bil_service_km_siden_service') | is_number }}"
+        state: >-
+          {{ (states('input_number.bil_service_interval_km') | float(20000)
+              - states('sensor.bil_service_km_siden_service') | float(0)) | round(0) }}
+
+      # Gennemsnitlig kørsel pr. dag. Bruger det rullende 30-dages snit, når der
+      # er mindst 14 dages måledata; ellers snittet siden sidste service.
+      - name: "Bil service km pr dag"
+        unique_id: bil_service_km_pr_dag
+        unit_of_measurement: "km/d"
+        state_class: measurement
+        state: >-
+          {% set odo = states('sensor.xpeng_g6_kilometertaeller') | float(0) %}
+          {% set base = states('input_number.bil_service_km_ved_sidste') | float(0) %}
+          {% set sidst = states('input_datetime.bil_service_sidst') %}
+          {% set dage_service = (now().date() - as_datetime(sidst).date()).days
+               if sidst not in ['unknown', 'unavailable', ''] else 0 %}
+          {% set aeldste = states('sensor.bil_service_aeldste_maaling') %}
+          {% set dage_vindue = (now() - as_datetime(aeldste)).total_seconds() / 86400
+               if aeldste not in ['unknown', 'unavailable', ''] else 0 %}
+          {% set km30 = states('sensor.bil_service_km_seneste_30_dage') %}
+          {% if km30 | is_number and dage_vindue >= 14 %}
+            {{ (km30 | float(0) / dage_vindue) | round(1) }}
+          {% elif dage_service >= 1 and odo > base %}
+            {{ ((odo - base) / dage_service) | round(1) }}
+          {% else %}
+            unknown
+          {% endif %}
+        attributes:
+          metode: >-
+            {% set aeldste = states('sensor.bil_service_aeldste_maaling') %}
+            {% set dage_vindue = (now() - as_datetime(aeldste)).total_seconds() / 86400
+                 if aeldste not in ['unknown', 'unavailable', ''] else 0 %}
+            {{ 'rullende 30 dage' if dage_vindue >= 14 else 'siden sidste service' }}
+
+      # Dato hvor tidsgrænsen (X måneder efter sidste service) nås
+      - name: "Bil service dato pga tid"
+        unique_id: bil_service_dato_pga_tid
+        device_class: date
+        availability: "{{ states('input_datetime.bil_service_sidst') not in ['unknown', 'unavailable', ''] }}"
+        state: >-
+          {% set d = as_datetime(states('input_datetime.bil_service_sidst')).date() %}
+          {% set n = states('input_number.bil_service_interval_maaneder') | int(12) %}
+          {% set m = d.month - 1 + n %}
+          {% set y = d.year + m // 12 %}
+          {% set mo = m % 12 + 1 %}
+          {% set skud = (y % 4 == 0 and (y % 100 != 0 or y % 400 == 0)) %}
+          {% set dim = [31, 29 if skud else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][mo - 1] %}
+          {{ '%04d-%02d-%02d' | format(y, mo, [d.day, dim] | min) }}
+
+      # Dato hvor kilometergrænsen nås, hvis bilen fortsætter med at køre som hidtil
+      - name: "Bil service dato pga km"
+        unique_id: bil_service_dato_pga_km
+        device_class: date
+        availability: >-
+          {{ states('sensor.bil_service_km_til_service') | is_number
+             and states('sensor.bil_service_km_pr_dag') | is_number
+             and states('sensor.bil_service_km_pr_dag') | float(0) > 0.5 }}
+        state: >-
+          {% set til = [states('sensor.bil_service_km_til_service') | float(0), 0] | max %}
+          {% set pr_dag = states('sensor.bil_service_km_pr_dag') | float(1) %}
+          {{ (now() + timedelta(days=til / pr_dag)).date().isoformat() }}
+
+      # Selve svaret: den tidligste af de to datoer
+      - name: "Bil næste service"
+        unique_id: bil_naeste_service
+        device_class: date
+        icon: mdi:car-wrench
+        availability: >-
+          {{ states('sensor.bil_service_dato_pga_tid') not in ['unknown', 'unavailable']
+             or states('sensor.bil_service_dato_pga_km') not in ['unknown', 'unavailable'] }}
+        state: >-
+          {% set t = states('sensor.bil_service_dato_pga_tid') %}
+          {% set k = states('sensor.bil_service_dato_pga_km') %}
+          {% set ok_t = t not in ['unknown', 'unavailable', ''] %}
+          {% set ok_k = k not in ['unknown', 'unavailable', ''] %}
+          {% if ok_t and ok_k %}{{ [t, k] | min }}
+          {% elif ok_t %}{{ t }}
+          {% else %}{{ k }}{% endif %}
+        attributes:
+          aarsag: >-
+            {% set t = states('sensor.bil_service_dato_pga_tid') %}
+            {% set k = states('sensor.bil_service_dato_pga_km') %}
+            {% if k in ['unknown', 'unavailable', ''] or t <= k %}tid (12 mdr){% else %}km{% endif %}
+          dato_pga_tid: "{{ states('sensor.bil_service_dato_pga_tid') }}"
+          dato_pga_km: "{{ states('sensor.bil_service_dato_pga_km') }}"
+          km_tilbage: "{{ states('sensor.bil_service_km_til_service') }}"
+          km_pr_dag: "{{ states('sensor.bil_service_km_pr_dag') }}"
+
+      - name: "Bil dage til service"
+        unique_id: bil_dage_til_service
+        unit_of_measurement: "dage"
+        icon: mdi:calendar-end
+        availability: "{{ states('sensor.bil_naeste_service') not in ['unknown', 'unavailable'] }}"
+        state: >-
+          {{ (as_datetime(states('sensor.bil_naeste_service')).date() - now().date()).days }}
+
+script:
+  # Kaldes fra dashboardet når bilen har været til service: sætter servicestand
+  # til bilens aktuelle kilometertæller og datoen til i dag (= nulstilling).
+  bil_service_udfoert:
+    alias: "Bil: service udført"
+    icon: mdi:car-wrench
+    sequence:
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.bil_service_km_ved_sidste
+        data:
+          value: "{{ states('sensor.xpeng_g6_kilometertaeller') | float(0) | round(0) }}"
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.bil_service_sidst
+        data:
+          date: "{{ now().date().isoformat() }}"
