@@ -105,7 +105,7 @@ views:
       heading: Service
       icon: mdi:car-wrench
     - type: tile
-      entity: sensor.bil_naeste_service
+      entity: sensor.bil_naeste_service_dato
       name: Næste service
       vertical: false
       features_position: bottom
@@ -139,17 +139,6 @@ views:
       name: Km siden service
       vertical: false
       features_position: bottom
-    - type: entities
-      show_header_toggle: false
-      entities:
-      - entity: input_datetime.bil_service_sidst
-        name: Sidste service (dato)
-      - entity: input_number.bil_service_km_ved_sidste
-        name: Km ved sidste service
-      - entity: input_number.bil_service_interval_km
-        name: Interval (km)
-      - entity: input_number.bil_service_interval_maaneder
-        name: Interval (måneder)
     - type: tile
       entity: script.bil_service_udfoert
       name: Service udført

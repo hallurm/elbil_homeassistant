@@ -183,6 +183,18 @@ template:
           km_tilbage: "{{ states('sensor.bil_service_km_til_service') }}"
           km_pr_dag: "{{ states('sensor.bil_service_km_pr_dag') }}"
 
+      # Samme dato som "Bil næste service", men som tekst på formen dd-mm-åååå
+      # (til visning på dashboardet — en dato-sensor formateres af HA efter sprog)
+      - name: "Bil næste service dato"
+        unique_id: bil_naeste_service_dato
+        icon: mdi:car-wrench
+        availability: "{{ states('sensor.bil_naeste_service') not in ['unknown', 'unavailable', ''] }}"
+        state: >-
+          {% set d = states('sensor.bil_naeste_service') %}
+          {{ d[8:10] ~ '-' ~ d[5:7] ~ '-' ~ d[0:4] }}
+        attributes:
+          aarsag: "{{ state_attr('sensor.bil_naeste_service', 'aarsag') }}"
+
       - name: "Bil dage til service"
         unique_id: bil_dage_til_service
         unit_of_measurement: "dage"

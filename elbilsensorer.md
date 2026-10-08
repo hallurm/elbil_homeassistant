@@ -200,7 +200,8 @@ Hjælperne har bevidst ingen `initial`, så en genstart af HA ikke nulstiller de
 - **`sensor.bil_service_dato_pga_tid`** = dato for sidste service + antal måneder (med korrekt håndtering af månedslængde og skudår).
 - **`sensor.bil_service_dato_pga_km`** = i dag + (km til service ÷ km pr. dag). Utilgængelig hvis kørslen er under ca. 0,5 km/dag.
 - **`sensor.bil_naeste_service`** — **svaret:** den tidligste af de to datoer. Attributten `aarsag` viser om det er `km` eller `tid (12 mdr)`, der afgør det.
+- **`sensor.bil_naeste_service_dato`** — samme dato som tekst på formen **dd-mm-åååå** (bruges på dashboardet; en dato-sensor formateres ellers af HA efter sprog).
 - **`sensor.bil_dage_til_service`** — antal dage til den dato.
 
 ### Nulstilling
-`script.bil_service_udfoert` ("Bil: service udført") sætter `bil_service_km_ved_sidste` til bilens aktuelle kilometertæller og `bil_service_sidst` til dags dato. Den kaldes fra knappen "Service udført" på dashboardets "Bil stats"-fane (med bekræftelsesdialog). Var servicen en anden dag eller ved en anden km-stand, kan de to hjælpere rettes bagefter.
+`script.bil_service_udfoert` ("Bil: service udført") sætter `bil_service_km_ved_sidste` til bilens aktuelle kilometertæller og `bil_service_sidst` til dags dato. Den kaldes fra knappen "Service udført" på dashboardets "Bil stats"-fane (med bekræftelsesdialog). Var servicen en anden dag eller ved en anden km-stand, kan de to hjælpere rettes bagefter under Indstillinger → Enheder & tjenester → Hjælpere (de vises bevidst ikke på dashboardet).
