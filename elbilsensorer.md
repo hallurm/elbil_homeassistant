@@ -138,6 +138,19 @@ Hver af disse lægger simpelthen den tilsvarende hjemme-periode-tæller sammen m
 
 ---
 
+## 5b. Gennemsnitlig pris pr. kWh
+
+*(Ligger i `homeassistant/elbil_gns_pris.yaml`, en HA-"package" i `/config/packages/`.)*
+
+Otte sensorer — to pr. periode (i dag / denne uge / denne måned / dette år):
+
+- **`sensor.elbil_gns_pris_pr_kwh_<periode>_hjemme`** = `pris (hjemme)` ÷ (`kWh fra nettet` + `kWh fra sol`). Solstrømmen tæller med som 0 kr., så tallet er den *effektive* pris pr. kWh, der kom i bilen derhjemme (ikke bare den pris, der blev betalt for den indkøbte strøm).
+- **`sensor.elbil_gns_pris_pr_kwh_<periode>_hjemme_og_ekstern`** = `total pris` ÷ `total kWh` (hjemme + offentlige ladestandere).
+
+Begge er **utilgængelige**, når der ikke er ladet noget i perioden (0 kWh), da en gennemsnitspris ikke giver mening uden kWh. Enheden er DKK/kWh, vist med 2 decimaler (sat via entitetsregistret, `display_precision`). Vises på dashboardet i "I dag - ekstern og total" og i hver af fanerne Uge, Måned og År.
+
+---
+
 ## 6. Automatisering: styring af husbatteriets afladning
 
 **`automation.elbil_oplader_deaktiver_batteri_afladning`** ("Elbil oplader - styr batteri-afladning")

@@ -20,6 +20,7 @@ Dette repo deler min personlige opsætning til inspiration — **brug det på eg
 ## Dokumentation
 
 - [elbilsensorer.md](elbilsensorer.md) — fuld funktionsbeskrivelse af alle sensorer, hjælpere, scriptet og automatiseringen: hvad de gør, og præcis hvordan hver beregning er sat sammen.
+- [homeassistant/elbil_gns_pris.yaml](homeassistant/elbil_gns_pris.yaml) — gennemsnitlig pris pr. kWh for i dag/uge/måned/år (HA-package, afsnit 5b i elbilsensorer.md).
 - [homeassistant/bil_service.yaml](homeassistant/bil_service.yaml) — "hvornår skal bilen til service?" (20.000 km eller 12 måneder). Selvstændig HA-package, beskrevet i afsnit 7 i elbilsensorer.md. Kræver bilens kilometertæller (`sensor.xpeng_g6_kilometertaeller`).
 
 ## Grundlæggende sensorer der kræves

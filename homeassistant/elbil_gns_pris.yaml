@@ -1,0 +1,111 @@
+# Elbil — gennemsnitlig pris pr. kWh (i dag / uge / måned / år)
+#
+# Home Assistant "package": ligger på serveren som
+# /config/packages/elbil_gns_pris.yaml (indlæses via
+#   homeassistant:
+#     packages: !include_dir_named packages
+# i configuration.yaml). Her i repoet er det en én-til-én kopi.
+#
+# To sensorer pr. periode:
+#   * hjemme            = pris (hjemme) / (kWh fra nettet + kWh fra sol)
+#                         Solstrømmen tæller med som 0 kr., så tallet er den
+#                         effektive pris pr. kWh der kom i bilen derhjemme.
+#   * hjemme og ekstern = total pris / total kWh (inkl. offentlige ladestandere)
+#
+# Sensorerne er "utilgængelige" når der ikke er ladet noget i perioden
+# (0 kWh) — en gennemsnitspris giver ikke mening uden kWh.
+# Se elbilsensorer.md, afsnit 5b.
+
+template:
+  - sensor:
+      - name: "Elbil gns. pris pr. kWh i dag (hjemme)"
+        unique_id: elbil_gns_pris_pr_kwh_i_dag_hjemme
+        unit_of_measurement: "DKK/kWh"
+        state_class: measurement
+        icon: mdi:cash-multiple
+        availability: >-
+          {{ (states('sensor.elbil_opladning_kwh_fra_nettet_i_dag') | float(0)
+              + states('sensor.elbil_opladning_kwh_fra_sol_i_dag') | float(0)) > 0 }}
+        state: >-
+          {% set kwh = states('sensor.elbil_opladning_kwh_fra_nettet_i_dag') | float(0)
+                     + states('sensor.elbil_opladning_kwh_fra_sol_i_dag') | float(0) %}
+          {{ (states('sensor.elbil_opladning_pris_i_dag') | float(0) / kwh) | round(3) }}
+
+      - name: "Elbil gns. pris pr. kWh i dag (hjemme og ekstern)"
+        unique_id: elbil_gns_pris_pr_kwh_i_dag_hjemme_og_ekstern
+        unit_of_measurement: "DKK/kWh"
+        state_class: measurement
+        icon: mdi:cash-multiple
+        availability: "{{ states('sensor.elbil_total_kwh_i_dag_hjemme_og_ekstern') | float(0) > 0 }}"
+        state: >-
+          {{ (states('sensor.elbil_total_pris_i_dag_hjemme_og_ekstern') | float(0)
+              / states('sensor.elbil_total_kwh_i_dag_hjemme_og_ekstern') | float(1)) | round(3) }}
+
+      - name: "Elbil gns. pris pr. kWh denne uge (hjemme)"
+        unique_id: elbil_gns_pris_pr_kwh_denne_uge_hjemme
+        unit_of_measurement: "DKK/kWh"
+        state_class: measurement
+        icon: mdi:cash-multiple
+        availability: >-
+          {{ (states('sensor.elbil_opladning_kwh_fra_nettet_denne_uge') | float(0)
+              + states('sensor.elbil_opladning_kwh_fra_sol_denne_uge') | float(0)) > 0 }}
+        state: >-
+          {% set kwh = states('sensor.elbil_opladning_kwh_fra_nettet_denne_uge') | float(0)
+                     + states('sensor.elbil_opladning_kwh_fra_sol_denne_uge') | float(0) %}
+          {{ (states('sensor.elbil_opladning_pris_denne_uge') | float(0) / kwh) | round(3) }}
+
+      - name: "Elbil gns. pris pr. kWh denne uge (hjemme og ekstern)"
+        unique_id: elbil_gns_pris_pr_kwh_denne_uge_hjemme_og_ekstern
+        unit_of_measurement: "DKK/kWh"
+        state_class: measurement
+        icon: mdi:cash-multiple
+        availability: "{{ states('sensor.elbil_total_kwh_denne_uge_hjemme_og_ekstern') | float(0) > 0 }}"
+        state: >-
+          {{ (states('sensor.elbil_total_pris_denne_uge_hjemme_og_ekstern') | float(0)
+              / states('sensor.elbil_total_kwh_denne_uge_hjemme_og_ekstern') | float(1)) | round(3) }}
+
+      - name: "Elbil gns. pris pr. kWh denne måned (hjemme)"
+        unique_id: elbil_gns_pris_pr_kwh_denne_maned_hjemme
+        unit_of_measurement: "DKK/kWh"
+        state_class: measurement
+        icon: mdi:cash-multiple
+        availability: >-
+          {{ (states('sensor.elbil_opladning_kwh_fra_nettet_denne_maned') | float(0)
+              + states('sensor.elbil_opladning_kwh_fra_sol_denne_maned') | float(0)) > 0 }}
+        state: >-
+          {% set kwh = states('sensor.elbil_opladning_kwh_fra_nettet_denne_maned') | float(0)
+                     + states('sensor.elbil_opladning_kwh_fra_sol_denne_maned') | float(0) %}
+          {{ (states('sensor.elbil_opladning_pris_denne_maned') | float(0) / kwh) | round(3) }}
+
+      - name: "Elbil gns. pris pr. kWh denne måned (hjemme og ekstern)"
+        unique_id: elbil_gns_pris_pr_kwh_denne_maned_hjemme_og_ekstern
+        unit_of_measurement: "DKK/kWh"
+        state_class: measurement
+        icon: mdi:cash-multiple
+        availability: "{{ states('sensor.elbil_total_kwh_denne_maned_hjemme_og_ekstern') | float(0) > 0 }}"
+        state: >-
+          {{ (states('sensor.elbil_total_pris_denne_maned_hjemme_og_ekstern') | float(0)
+              / states('sensor.elbil_total_kwh_denne_maned_hjemme_og_ekstern') | float(1)) | round(3) }}
+
+      - name: "Elbil gns. pris pr. kWh dette år (hjemme)"
+        unique_id: elbil_gns_pris_pr_kwh_dette_ar_hjemme
+        unit_of_measurement: "DKK/kWh"
+        state_class: measurement
+        icon: mdi:cash-multiple
+        availability: >-
+          {{ (states('sensor.elbil_opladning_kwh_fra_nettet_dette_ar') | float(0)
+              + states('sensor.elbil_opladning_kwh_fra_sol_dette_ar') | float(0)) > 0 }}
+        state: >-
+          {% set kwh = states('sensor.elbil_opladning_kwh_fra_nettet_dette_ar') | float(0)
+                     + states('sensor.elbil_opladning_kwh_fra_sol_dette_ar') | float(0) %}
+          {{ (states('sensor.elbil_opladning_pris_dette_ar') | float(0) / kwh) | round(3) }}
+
+      - name: "Elbil gns. pris pr. kWh dette år (hjemme og ekstern)"
+        unique_id: elbil_gns_pris_pr_kwh_dette_ar_hjemme_og_ekstern
+        unit_of_measurement: "DKK/kWh"
+        state_class: measurement
+        icon: mdi:cash-multiple
+        availability: "{{ states('sensor.elbil_total_kwh_dette_ar_hjemme_og_ekstern') | float(0) > 0 }}"
+        state: >-
+          {{ (states('sensor.elbil_total_pris_dette_ar_hjemme_og_ekstern') | float(0)
+              / states('sensor.elbil_total_kwh_dette_ar_hjemme_og_ekstern') | float(1)) | round(3) }}

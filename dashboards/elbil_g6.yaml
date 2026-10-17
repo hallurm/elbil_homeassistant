@@ -24,6 +24,9 @@ views:
   sections:
   - type: grid
     cards:
+    - type: heading
+      heading: Rækkevidde
+      heading_style: title
     - type: tile
       entity: sensor.xpeng_g6_kilometertaeller
       name:
@@ -43,6 +46,9 @@ views:
       features_position: bottom
   - type: grid
     cards:
+    - type: heading
+      heading_style: title
+      heading: Sensorer
     - type: tile
       entity: sensor.xpeng_g6_soc
       name:
@@ -71,6 +77,9 @@ views:
       features_position: bottom
   - type: grid
     cards:
+    - type: heading
+      heading: Forbrug
+      heading_style: title
     - type: tile
       entity: sensor.xpeng_g6_forbrug_siden_start
       name:
@@ -113,8 +122,21 @@ views:
       - state
       - aarsag
       grid_options:
-        columns: full
         rows: 1
+    - type: tile
+      entity: script.bil_service_udfoert
+      name: Service udført
+      vertical: false
+      features_position: bottom
+      icon: mdi:wrench-check
+      icon_color: green
+      tap_action:
+        action: perform-action
+        perform_action: script.turn_on
+        target:
+          entity_id: script.bil_service_udfoert
+        confirmation:
+          text: Registrér at bilen har været til service nu? Det nulstiller servicetælleren.
     - type: tile
       entity: sensor.bil_dage_til_service
       name: Dage til service
@@ -139,24 +161,14 @@ views:
       name: Km siden service
       vertical: false
       features_position: bottom
-    - type: tile
-      entity: script.bil_service_udfoert
-      name: Service udført
-      vertical: false
-      features_position: bottom
-      icon: mdi:wrench-check
-      icon_color: green
-      tap_action:
-        action: perform-action
-        perform_action: script.turn_on
-        target:
-          entity_id: script.bil_service_udfoert
-        confirmation:
-          text: Registrér at bilen har været til service nu? Det nulstiller servicetælleren.
-      grid_options:
-        columns: full
-        rows: 1
   cards: []
+  badges:
+  - type: entity
+    entity: binary_sensor.xpeng_g6_gateway
+    show_name: true
+  - type: entity
+    entity: binary_sensor.xpeng_g6_bil_online_obd
+    show_name: true
 - type: sections
   theme: Frosted Glass
   max_columns: 3
@@ -225,6 +237,12 @@ views:
     - type: custom:mushroom-entity-card
       entity: sensor.elbil_total_pris_i_dag_hjemme_og_ekstern
       name: Total pris
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_gns_pris_pr_kwh_i_dag_hjemme
+      name: Gns. pris/kWh (hjemme)
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_gns_pris_pr_kwh_i_dag_hjemme_og_ekstern
+      name: Gns. pris/kWh (total)
   - type: grid
     cards:
     - type: heading
@@ -386,6 +404,12 @@ views:
     - type: custom:mushroom-entity-card
       entity: sensor.elbil_total_pris_denne_uge_hjemme_og_ekstern
       name: Total pris
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_gns_pris_pr_kwh_denne_uge_hjemme
+      name: Gns. pris/kWh (hjemme)
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_gns_pris_pr_kwh_denne_uge_hjemme_og_ekstern
+      name: Gns. pris/kWh (total)
   - type: grid
     cards:
     - type: heading
@@ -534,6 +558,12 @@ views:
     - type: custom:mushroom-entity-card
       entity: sensor.elbil_total_pris_denne_maned_hjemme_og_ekstern
       name: Total pris
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_gns_pris_pr_kwh_denne_maned_hjemme
+      name: Gns. pris/kWh (hjemme)
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_gns_pris_pr_kwh_denne_maned_hjemme_og_ekstern
+      name: Gns. pris/kWh (total)
   - type: grid
     cards:
     - type: heading
@@ -681,6 +711,12 @@ views:
     - type: custom:mushroom-entity-card
       entity: sensor.elbil_total_pris_dette_ar_hjemme_og_ekstern
       name: Total pris
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_gns_pris_pr_kwh_dette_ar_hjemme
+      name: Gns. pris/kWh (hjemme)
+    - type: custom:mushroom-entity-card
+      entity: sensor.elbil_gns_pris_pr_kwh_dette_ar_hjemme_og_ekstern
+      name: Gns. pris/kWh (total)
   - type: grid
     cards:
     - type: heading

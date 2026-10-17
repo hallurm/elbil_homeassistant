@@ -43,9 +43,13 @@ raw hardware sensors (phase currents/voltages, grid meter, inverter)
 
 Public-charger sessions can't be measured automatically, so `homeassistant/input_number.yaml` defines manual entry fields plus a running total, and `homeassistant/scripts.yaml`'s single script folds an entry into the total and resets the input fields. The `_total_*_alt` sensors at the bottom of `sensors.yaml` add home + external together *without* feeding external kWh into the solar-share percentage, since external charging has no known solar fraction by definition.
 
+### Packages (1:1 copies of live files)
+
+`homeassistant/elbil_gns_pris.yaml` (average price per kWh per period) and `homeassistant/bil_service.yaml` (below) are Home Assistant **packages** — on the server they are `/config/packages/*.yaml`, loaded via `homeassistant: packages: !include_dir_named packages` in `configuration.yaml`. Unlike the other files here they are exact copies of the live files. Template sensors in packages must not use `suggested_display_precision` (invalid for `template:` in this HA version); set `options.sensor.display_precision` in `.storage/core.entity_registry` instead (HA stopped, and the entity must already exist in the registry).
+
 ### Bil service (separate from charging)
 
-`homeassistant/bil_service.yaml` is a self-contained Home Assistant **package** (on the server: `/config/packages/bil_service.yaml`, loaded via `homeassistant: packages: !include_dir_named packages` in `configuration.yaml`). It computes the next car-service date (20,000 km or 12 months, whichever first) from the car's odometer, with a reset script. Unlike the other files here it is a 1:1 copy of the live file. Template sensors there must not use `suggested_display_precision` (invalid for `template:` in this HA version). Documented in `elbilsensorer.md` section 7.
+`homeassistant/bil_service.yaml` is a self-contained Home Assistant **package** (on the server: `/config/packages/bil_service.yaml`, loaded via `homeassistant: packages: !include_dir_named packages` in `configuration.yaml`). It computes the next car-service date (20,000 km or 12 months, whichever first) from the car's odometer, with a reset script. Documented in `elbilsensorer.md` section 7.
 
 ### Two dashboards, two different mechanisms
 
