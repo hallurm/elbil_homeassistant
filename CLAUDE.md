@@ -6,21 +6,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is **not** a runnable application. It's a curated, public export of the EV-charging-cost part of one Home Assistant installation's configuration — a documentation/reference repo, not a deployable config tree. There is no build system, no linter, no test suite, and nothing here executes on its own.
 
-The files are snapshots taken from a live Home Assistant server via SSH and hand-filtered down to only the EV-related pieces; the server's full `configuration.yaml`/`automations.yaml`/`scripts.yaml` contain a large amount of unrelated household automation that is deliberately **not** included here. Editing files in this repo has **no effect** on any running system — there is no deploy step, no CI, and no connection back to the original server.
+The files are snapshots taken from a live Home Assistant server via SSH. The sensors/helpers/meters are **packages** (`homeassistant/elbil_*.yaml`, `bil_service.yaml`) that are exact copies of the live `/config/packages/*.yaml`; `automations.yaml` and `scripts.yaml` here are hand-filtered extracts of the server's much larger files. The server's `configuration.yaml` and its unrelated household automation are deliberately **not** included here. Editing files in this repo has **no effect** on any running system — there is no deploy step, no CI, and no connection back to the original server.
 
 ## Commands
 
 There is no build, lint, or test tooling in this repo. The only useful local check is YAML syntax validation, since these files are hand-extracted fragments rather than complete, includable configs:
 
 ```bash
-python -c "import yaml, sys; yaml.safe_load(open(sys.argv[1], encoding='utf-8'))" homeassistant/sensors.yaml
+python -c "import yaml, sys; yaml.safe_load(open(sys.argv[1], encoding='utf-8'))" homeassistant/elbil_opladning.yaml
 ```
 
 Run per-file for whichever file you changed. This only catches YAML syntax errors — it cannot catch Home Assistant template errors, wrong entity references, or Jinja2 mistakes, since there is no live Home Assistant instance to validate against here.
 
 ## Architecture
 
-### The calculation chain (spans `homeassistant/sensors.yaml`, `utility_meter.yaml`, `automations.yaml`)
+### The calculation chain (spans `homeassistant/elbil_opladning.yaml`, `elbil_ekstern.yaml`, `automations.yaml`)
 
 The core design problem this config solves: there is no physical power meter isolated on the EV charger itself, so "how much of the charging came from solar vs. the grid" is *derived*, not measured. The full reasoning is written up in [elbilsensorer.md](elbilsensorer.md) — read that before changing any formula. In short, the chain is:
 
@@ -37,15 +37,15 @@ raw hardware sensors (phase currents/voltages, grid meter, inverter)
   → [combined with externally-logged public charging] → "hjemme og ekstern" totals
 ```
 
-`homeassistant/sensors.yaml` contains both the three `platform: integration` (Riemann sum) accumulators and the `template:` sensors that do the instant-power math. `homeassistant/utility_meter.yaml` derives the day/week/month/year period counters from those accumulators. `homeassistant/automations.yaml` holds a single automation that zeroes the home battery's discharge limit while the car is charging — without it, battery discharge would silently pollute the grid/solar split.
+`homeassistant/elbil_opladning.yaml` contains the three `platform: integration` (Riemann sum) accumulators, the `template:` sensors that do the instant-power math, and the `utility_meter` day/week/month/year period counters derived from those accumulators. `homeassistant/automations.yaml` holds a single automation that zeroes the home battery's discharge limit while the car is charging — without it, battery discharge would silently pollute the grid/solar split.
 
 ### External (public) charging
 
-Public-charger sessions can't be measured automatically, so `homeassistant/input_number.yaml` defines manual entry fields plus a running total, and `homeassistant/scripts.yaml`'s single script folds an entry into the total and resets the input fields. The `_total_*_alt` sensors at the bottom of `sensors.yaml` add home + external together *without* feeding external kWh into the solar-share percentage, since external charging has no known solar fraction by definition.
+Public-charger sessions can't be measured automatically, so `homeassistant/elbil_ekstern.yaml` defines manual entry fields plus a running total, and `homeassistant/scripts.yaml`'s single script folds an entry into the total and resets the input fields. The `_total_*_alt` sensors in `elbil_ekstern.yaml` add home + external together *without* feeding external kWh into the solar-share percentage, since external charging has no known solar fraction by definition.
 
 ### Packages (1:1 copies of live files)
 
-`homeassistant/elbil_gns_pris.yaml` (average price per kWh per period) and `homeassistant/bil_service.yaml` (below) are Home Assistant **packages** — on the server they are `/config/packages/*.yaml`, loaded via `homeassistant: packages: !include_dir_named packages` in `configuration.yaml`. Unlike the other files here they are exact copies of the live files. Template sensors in packages must not use `suggested_display_precision` (invalid for `template:` in this HA version); set `options.sensor.display_precision` in `.storage/core.entity_registry` instead (HA stopped, and the entity must already exist in the registry).
+All EV/car configuration lives in Home Assistant **packages** on the server (`/config/packages/*.yaml`, loaded via `homeassistant: packages: !include_dir_named packages` in `configuration.yaml`): `elbil_opladning.yaml` (charging chain + period meters), `elbil_ekstern.yaml` (external charging + combined totals), `elbil_gns_pris.yaml` (average price per kWh), `elbil_dashboard.yaml` (registers `dashboards/elbil.yaml`) and `bil_service.yaml` (below). The copies in `homeassistant/` are exact; after changing a live package, re-copy it here. Package files merge with the main config, so `template:`/`sensor:` lists and `input_number:`/`utility_meter:` dicts can be split across files as long as entity names/keys stay unique. Template sensors in packages must not use `suggested_display_precision` (invalid for `template:` in this HA version); set `options.sensor.display_precision` in `.storage/core.entity_registry` instead (HA stopped, and the entity must already exist in the registry).
 
 ### Bil service (separate from charging)
 
@@ -60,9 +60,9 @@ Public-charger sessions can't be measured automatically, so `homeassistant/input
 
 A recurring gotcha reflected throughout these files: Home Assistant generates an entity's `entity_id` by slugifying its **`name:`** field, not its `unique_id` or its YAML dict key. Several sensor and `utility_meter` names intentionally spell out full Danish phrases (e.g. `"Elbil opladning kWh fra nettet denne måned"`) because the resulting entity_id (`sensor.elbil_opladning_kwh_fra_nettet_denne_maned`, note "å" → "a") is what every other template's `states('sensor...')` call must reference. If you rename a `name:` field, every downstream template referencing its old entity_id breaks silently (falls back to `float(0)`) rather than erroring loudly.
 
-### Display precision is split across two mechanisms
+### Display precision is set in the entity registry
 
-Template sensors carry `suggested_display_precision: 1` directly in `sensors.yaml`. The `integration`-platform accumulators and all `utility_meter` period counters have no YAML equivalent for this — on the live instance their 1-decimal display is set via the entity registry (`options.sensor.display_precision`), which isn't captured in these exported files. See the header comments in `sensors.yaml` and `utility_meter.yaml`.
+None of the EV sensors carry a display precision in YAML (`suggested_display_precision` is invalid for `template:` in this HA version, and `integration`/`utility_meter` have no such option). On the live instance the 1-decimal display (2 decimals for the DKK/kWh average sensors) is set via the entity registry (`options.sensor.display_precision` in `.storage/core.entity_registry`), which isn't captured in these exported files.
 
 ## Working in this repo
 

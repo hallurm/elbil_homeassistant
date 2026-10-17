@@ -20,6 +20,7 @@ Dette repo deler min personlige opsætning til inspiration — **brug det på eg
 ## Dokumentation
 
 - [elbilsensorer.md](elbilsensorer.md) — fuld funktionsbeskrivelse af alle sensorer, hjælpere, scriptet og automatiseringen: hvad de gør, og præcis hvordan hver beregning er sat sammen.
+- [homeassistant/elbil_opladning.yaml](homeassistant/elbil_opladning.yaml), [elbil_ekstern.yaml](homeassistant/elbil_ekstern.yaml), [elbil_dashboard.yaml](homeassistant/elbil_dashboard.yaml) — selve elbil-opsætningen som HA-packages (sensorer, hjælpere, periodetællere).
 - [homeassistant/elbil_gns_pris.yaml](homeassistant/elbil_gns_pris.yaml) — gennemsnitlig pris pr. kWh for i dag/uge/måned/år (HA-package, afsnit 5b i elbilsensorer.md).
 - [homeassistant/bil_service.yaml](homeassistant/bil_service.yaml) — "hvornår skal bilen til service?" (20.000 km eller 12 måneder). Selvstændig HA-package, beskrevet i afsnit 7 i elbilsensorer.md. Kræver bilens kilometertæller (`sensor.xpeng_g6_kilometertaeller`).
 
@@ -51,11 +52,15 @@ Alt i dette repo er **beregnet ud fra** eksisterende sensorer fra andre integrat
 
 ## Sådan bruges filerne
 
-Filerne i `homeassistant/` er **ikke** noget Home Assistant læser direkte via `!include` — de er udtrukket fra en langt større `configuration.yaml`/`automations.yaml`/`scripts.yaml`, der også indeholder en masse andet, ikke-elbil-relateret husopsætning. For at bruge dem:
+Filerne i `homeassistant/` (undtagen `automations.yaml` og `scripts.yaml`) er **Home Assistant "packages"** og er én-til-én kopier af de filer, der kører på min server i `/config/packages/`. For at bruge dem:
 
-1. Kopiér indholdet af `homeassistant/sensors.yaml` ind under dine egne `sensor:`/`template:`-blokke i `configuration.yaml`
-2. Tilsvarende for `input_number.yaml` og `utility_meter.yaml`
+1. Kopiér `homeassistant/elbil_*.yaml` (og evt. `bil_service.yaml`) til `/config/packages/` på din egen Home Assistant
+2. Tilføj dette til din `configuration.yaml` (hvis du ikke allerede bruger packages):
+   ```yaml
+   homeassistant:
+     packages: !include_dir_named packages
+   ```
 3. Kopiér automatiseringen fra `homeassistant/automations.yaml` og scriptet fra `homeassistant/scripts.yaml` ind i dine egne `automations.yaml`/`scripts.yaml`
 4. **Erstat alle entity-referencer** (`sensor.fsp_ne_312821708_*`, `sensor.inverter_active_power`, `sensor.power_meter_*`, `sensor.el_kob_pris` osv.) med dine egne
 5. Genstart Home Assistant og tjek `ha core check` (eller Udvikler-værktøjer → YAML) for fejl
-6. Importér et af dashboardene, og opdater entity-navnene der på samme måde
+6. Importér et af dashboardene, og opdater entity-navnene der på samme måde. (`elbil_dashboard.yaml` registrerer det simple YAML-dashboard `dashboards/elbil.yaml` — spring den over, hvis du ikke vil bruge det.)

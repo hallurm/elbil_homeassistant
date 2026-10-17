@@ -1,0 +1,13 @@
+# Elbil — det simple YAML-mode dashboard (dashboards/elbil.yaml).
+#
+# Home Assistant "package" (/config/packages/elbil_dashboard.yaml). G6-dashboardet
+# er storage-mode (oprettet i UI'et) og skal ikke registreres her.
+
+lovelace:
+  dashboards:
+    elbil-dashboard:
+      mode: yaml
+      title: Elbil
+      icon: mdi:car-electric
+      show_in_sidebar: true
+      filename: dashboards/elbil.yaml

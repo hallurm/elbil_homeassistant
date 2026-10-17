@@ -2,7 +2,7 @@
 
 Dette dokument beskriver alle sensorer, hjælpere (helpers), et script og en automatisering, der er bygget til at beregne omkostningen ved at lade elbilen derhjemme, holde styr på hvor stor en andel der kommer fra solceller frem for elnettet, og lade opladning ved eksterne ladestandere indgå i det samlede regnskab.
 
-Alt er defineret i [configuration.yaml](configuration.yaml), [automations.yaml](automations.yaml) og [scripts.yaml](scripts.yaml) på Home Assistant-serveren. Dashboardet, der viser tallene, er ikke beskrevet her.
+Alt er defineret i Home Assistant-packages i `/config/packages/` (`elbil_opladning.yaml`, `elbil_ekstern.yaml`, `elbil_gns_pris.yaml`, `elbil_dashboard.yaml`, `bil_service.yaml` — se `homeassistant/` i dette repo) samt [automations.yaml](automations.yaml) og [scripts.yaml](scripts.yaml) på Home Assistant-serveren. Dashboardet, der viser tallene, er ikke beskrevet her.
 
 ## Grundlæggende forudsætning
 

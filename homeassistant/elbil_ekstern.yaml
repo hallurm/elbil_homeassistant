@@ -1,0 +1,228 @@
+# Elbil — ekstern opladning (offentlige ladestandere) og samlede totaler.
+#
+# Home Assistant "package" (/config/packages/elbil_ekstern.yaml). Indeholder:
+#   * input_number: indtastningsfelter (kWh/pris) og de løbende totaler
+#   * template-sensorer der viser ekstern total, samt de kombinerede totaler
+#     "hjemme og ekstern" (total + i dag/uge/måned/år)
+#   * utility_meter-periodetællere for ekstern opladning
+#
+# Scriptet der lægger en indtastning til totalen ligger i scripts.yaml
+# (script.elbil_gem_ekstern_opladning). Se elbilsensorer.md, afsnit 4-5.
+
+input_number:
+  elbil_ekstern_kwh_indtastning:
+    name: "Elbil ekstern opladning - kWh (indtast her)"
+    min: 0
+    max: 200
+    step: 0.01
+    unit_of_measurement: "kWh"
+    icon: mdi:ev-station
+    mode: box
+
+  elbil_ekstern_pris_indtastning:
+    name: "Elbil ekstern opladning - pris (indtast her)"
+    min: 0
+    max: 5000
+    step: 0.01
+    unit_of_measurement: "DKK"
+    icon: mdi:cash-plus
+    mode: box
+
+  elbil_ekstern_kwh_total:
+    name: "Elbil ekstern opladning kWh (samlet)"
+    min: 0
+    max: 100000
+    step: 0.01
+    unit_of_measurement: "kWh"
+    icon: mdi:ev-station
+    mode: box
+
+  elbil_ekstern_pris_total:
+    name: "Elbil ekstern opladning pris (samlet)"
+    min: 0
+    max: 1000000
+    step: 0.01
+    unit_of_measurement: "DKK"
+    icon: mdi:cash-multiple
+    mode: box
+
+template:
+  - sensor:
+      # Externally purchased EV charging (public chargers) - lifetime totals
+      - name: "Elbil ekstern opladning kWh total"
+        unique_id: "elbil_ekstern_opladning_kwh_total"
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total
+        icon: mdi:ev-station
+        state: "{{ states('input_number.elbil_ekstern_kwh_total') | float(0) }}"
+
+      - name: "Elbil ekstern opladning pris total"
+        unique_id: "elbil_ekstern_opladning_pris_total"
+        unit_of_measurement: "DKK"
+        state_class: total
+        icon: mdi:cash-multiple
+        state: "{{ states('input_number.elbil_ekstern_pris_total') | float(0) }}"
+
+      # Combined grand totals (home + external) - does NOT feed into the
+      # home solandel calculation, which stays scoped to home charging only
+      - name: "Elbil total kWh (hjemme og ekstern)"
+        unique_id: "elbil_total_kwh_alt"
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total
+        icon: mdi:car-electric
+        state: >-
+          {% set hjemme_net = states('sensor.elbil_oplader_energi_fra_nettet') | float(0) %}
+          {% set hjemme_sol = states('sensor.elbil_oplader_energi_fra_sol') | float(0) %}
+          {% set ekstern = states('input_number.elbil_ekstern_kwh_total') | float(0) %}
+          {{ (hjemme_net + hjemme_sol + ekstern) | round(3) }}
+
+      - name: "Elbil total pris (hjemme og ekstern)"
+        unique_id: "elbil_total_pris_alt"
+        unit_of_measurement: "DKK"
+        state_class: total
+        icon: mdi:cash-multiple
+        state: >-
+          {% set hjemme = states('sensor.elbil_oplader_pris_akkumuleret') | float(0) %}
+          {% set ekstern = states('input_number.elbil_ekstern_pris_total') | float(0) %}
+          {{ (hjemme + ekstern) | round(2) }}
+
+      # Combined totals per period (home + external) - kWh
+      - name: "Elbil total kWh i dag (hjemme og ekstern)"
+        unique_id: "elbil_total_kwh_i_dag_alt"
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total
+        icon: mdi:car-electric
+        state: >-
+          {% set net = states('sensor.elbil_opladning_kwh_fra_nettet_i_dag') | float(0) %}
+          {% set sol = states('sensor.elbil_opladning_kwh_fra_sol_i_dag') | float(0) %}
+          {% set ekstern = states('sensor.elbil_ekstern_opladning_kwh_i_dag') | float(0) %}
+          {{ (net + sol + ekstern) | round(3) }}
+
+      - name: "Elbil total kWh denne uge (hjemme og ekstern)"
+        unique_id: "elbil_total_kwh_denne_uge_alt"
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total
+        icon: mdi:car-electric
+        state: >-
+          {% set net = states('sensor.elbil_opladning_kwh_fra_nettet_denne_uge') | float(0) %}
+          {% set sol = states('sensor.elbil_opladning_kwh_fra_sol_denne_uge') | float(0) %}
+          {% set ekstern = states('sensor.elbil_ekstern_opladning_kwh_denne_uge') | float(0) %}
+          {{ (net + sol + ekstern) | round(3) }}
+
+      - name: "Elbil total kWh denne måned (hjemme og ekstern)"
+        unique_id: "elbil_total_kwh_denne_maaned_alt"
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total
+        icon: mdi:car-electric
+        state: >-
+          {% set net = states('sensor.elbil_opladning_kwh_fra_nettet_denne_maned') | float(0) %}
+          {% set sol = states('sensor.elbil_opladning_kwh_fra_sol_denne_maned') | float(0) %}
+          {% set ekstern = states('sensor.elbil_ekstern_opladning_kwh_denne_maned') | float(0) %}
+          {{ (net + sol + ekstern) | round(3) }}
+
+      - name: "Elbil total kWh dette år (hjemme og ekstern)"
+        unique_id: "elbil_total_kwh_dette_aar_alt"
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total
+        icon: mdi:car-electric
+        state: >-
+          {% set net = states('sensor.elbil_opladning_kwh_fra_nettet_dette_ar') | float(0) %}
+          {% set sol = states('sensor.elbil_opladning_kwh_fra_sol_dette_ar') | float(0) %}
+          {% set ekstern = states('sensor.elbil_ekstern_opladning_kwh_dette_ar') | float(0) %}
+          {{ (net + sol + ekstern) | round(3) }}
+
+      # Combined totals per period (home + external) - price
+      - name: "Elbil total pris i dag (hjemme og ekstern)"
+        unique_id: "elbil_total_pris_i_dag_alt"
+        unit_of_measurement: "DKK"
+        state_class: total
+        icon: mdi:cash-multiple
+        state: >-
+          {% set hjemme = states('sensor.elbil_opladning_pris_i_dag') | float(0) %}
+          {% set ekstern = states('sensor.elbil_ekstern_opladning_pris_i_dag') | float(0) %}
+          {{ (hjemme + ekstern) | round(2) }}
+
+      - name: "Elbil total pris denne uge (hjemme og ekstern)"
+        unique_id: "elbil_total_pris_denne_uge_alt"
+        unit_of_measurement: "DKK"
+        state_class: total
+        icon: mdi:cash-multiple
+        state: >-
+          {% set hjemme = states('sensor.elbil_opladning_pris_denne_uge') | float(0) %}
+          {% set ekstern = states('sensor.elbil_ekstern_opladning_pris_denne_uge') | float(0) %}
+          {{ (hjemme + ekstern) | round(2) }}
+
+      - name: "Elbil total pris denne måned (hjemme og ekstern)"
+        unique_id: "elbil_total_pris_denne_maaned_alt"
+        unit_of_measurement: "DKK"
+        state_class: total
+        icon: mdi:cash-multiple
+        state: >-
+          {% set hjemme = states('sensor.elbil_opladning_pris_denne_maned') | float(0) %}
+          {% set ekstern = states('sensor.elbil_ekstern_opladning_pris_denne_maned') | float(0) %}
+          {{ (hjemme + ekstern) | round(2) }}
+
+      - name: "Elbil total pris dette år (hjemme og ekstern)"
+        unique_id: "elbil_total_pris_dette_aar_alt"
+        unit_of_measurement: "DKK"
+        state_class: total
+        icon: mdi:cash-multiple
+        state: >-
+          {% set hjemme = states('sensor.elbil_opladning_pris_dette_ar') | float(0) %}
+          {% set ekstern = states('sensor.elbil_ekstern_opladning_pris_dette_ar') | float(0) %}
+          {{ (hjemme + ekstern) | round(2) }}
+
+utility_meter:
+  ev_ekstern_kwh_i_dag:
+    source: sensor.elbil_ekstern_opladning_kwh_total
+    name: "Elbil ekstern opladning kWh i dag"
+    unique_id: ev_ekstern_kwh_i_dag
+    cycle: daily
+
+  ev_ekstern_kwh_denne_uge:
+    source: sensor.elbil_ekstern_opladning_kwh_total
+    name: "Elbil ekstern opladning kWh denne uge"
+    unique_id: ev_ekstern_kwh_denne_uge
+    cycle: weekly
+
+  ev_ekstern_kwh_denne_maaned:
+    source: sensor.elbil_ekstern_opladning_kwh_total
+    name: "Elbil ekstern opladning kWh denne måned"
+    unique_id: ev_ekstern_kwh_denne_maaned
+    cycle: monthly
+
+  ev_ekstern_kwh_dette_aar:
+    source: sensor.elbil_ekstern_opladning_kwh_total
+    name: "Elbil ekstern opladning kWh dette år"
+    unique_id: ev_ekstern_kwh_dette_aar
+    cycle: yearly
+
+  ev_ekstern_pris_i_dag:
+    source: sensor.elbil_ekstern_opladning_pris_total
+    name: "Elbil ekstern opladning pris i dag"
+    unique_id: ev_ekstern_pris_i_dag
+    cycle: daily
+
+  ev_ekstern_pris_denne_uge:
+    source: sensor.elbil_ekstern_opladning_pris_total
+    name: "Elbil ekstern opladning pris denne uge"
+    unique_id: ev_ekstern_pris_denne_uge
+    cycle: weekly
+
+  ev_ekstern_pris_denne_maaned:
+    source: sensor.elbil_ekstern_opladning_pris_total
+    name: "Elbil ekstern opladning pris denne måned"
+    unique_id: ev_ekstern_pris_denne_maaned
+    cycle: monthly
+
+  ev_ekstern_pris_dette_aar:
+    source: sensor.elbil_ekstern_opladning_pris_total
+    name: "Elbil ekstern opladning pris dette år"
+    unique_id: ev_ekstern_pris_dette_aar
+    cycle: yearly
